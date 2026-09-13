@@ -486,8 +486,8 @@ function renderSidebarInto(){
             <span class="chapter-num">${String(idx+1).padStart(2,'0')}</span>
             <span class="chapter-title">${esc(c.title)}</span>
             <span class="chapter-actions">
-              <button class="icon-btn" data-action="start-rename" data-id="${c.id}" onclick="event.stopPropagation()">&#9998;</button>
-              <button class="icon-btn" data-action="confirm-delete-chapter" data-id="${c.id}" onclick="event.stopPropagation()">&#128465;</button>
+              <button class="icon-btn" data-action="start-rename" data-id="${c.id}">&#9998;</button>
+              <button class="icon-btn" data-action="confirm-delete-chapter" data-id="${c.id}">&#128465;</button>
             </span>
           </div>`;
       }
@@ -901,7 +901,7 @@ function renderQuestionList(){
           ` : ''}
           ${it.file_url ? `<div><a href="${esc(it.file_url)}" target="_blank" rel="noreferrer" class="file-chip">&#128206; ${esc(it.file_name||'file')} <span class="fsize">${formatBytes(it.file_size)}</span></a></div>` : ''}
           <div class="mastered-row">
-            <input type="checkbox" ${it.mastered?'checked':''} data-action="toggle-mastered" data-id="${it.id}" onclick="event.stopPropagation()" />
+            <input type="checkbox" ${it.mastered?'checked':''} data-action="toggle-mastered" data-id="${it.id}" />
             Comfortable with this one
           </div>
         </div>
