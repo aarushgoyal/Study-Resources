@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Study Binder</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --ink: #1B2430;
+    --paper: #F5F6F1;
+    --card: #FFFFFF;
+    --border: #DDE0D6;
+    --accent: #2F6F4F;
+    --accent-soft: #E4EFE7;
+    --gold: #C08A2E;
+    --text: #23282F;
+    --text-dim: #6B7280;
+    --danger: #B5453A;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100vh;
+    font-family: 'Public Sans', -apple-system, sans-serif;
+    color: var(--text); background: var(--paper);
+  }
+  .serif { font-family: 'Fraunces', Georgia, serif; }
+  #app { display: flex; min-height: 100vh; width: 100%; }
+
+  /* ---------- setup screen ---------- */
+  .setup-wrap { max-width: 680px; margin: 0 auto; padding: 56px 24px; }
+  .setup-wrap h1 { font-size: 28px; margin: 0 0 6px 0; }
+  .setup-wrap > p.lead { color: var(--text-dim); margin: 0 0 28px 0; font-size: 15px; line-height: 1.55; }
+  .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; margin-bottom: 18px; }
+  .setup-card h2 { font-size: 16px; margin: 0 0 10px 0; }
+  .setup-card ol { margin: 0; padding-left: 20px; font-size: 14.5px; line-height: 1.8; }
+  .setup-card ol li { margin-bottom: 4px; }
+  .setup-card p.hint { font-size: 13.5px; color: var(--text-dim); margin: 6px 0 0 0; }
+  .code-block {
+    background: #1B2430; color: #DCE3DA; border-radius: 8px; padding: 12px 14px;
+    font-family: ui-monospace, monospace; font-size: 12px; overflow-x: auto;
+    white-space: pre; margin: 10px 0; position: relative; line-height: 1.6;
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.12);
+    color: #fff; border: none; border-radius: 6px; padding: 4px 9px; font-size: 11.5px; cursor: pointer;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.2); }
+  .setup-wrap input[type=text] {
+    width: 100%; font-size: 14px; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; background: #FCFCFA; margin-bottom: 10px;
+  }
+  .setup-wrap input[type=text]:focus { outline: none; border-color: var(--accent); }
+  .setup-wrap label.field-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-dim); margin-bottom: 5px; }
+  .setup-error {
+    background: #FBEAE8; border: 1px solid #E9BAB3; color: var(--danger);
+    padding: 10px 14px; border-radius: 8px; font-size: 13.5px; margin-bottom: 14px;
+  }
+  .btn { padding: 10px 18px; border-radius: 8px; font-size: 14.5px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #275C41; }
+  .btn.text { background: none; color: var(--text-dim); }
+  .btn.text:hover { color: var(--text); }
+  .btn:disabled { opacity: 0.6; cursor: default; }
+
+  /* ---------- sidebar ---------- */
+  .sidebar { width: 272px; flex-shrink: 0; background: var(--ink); color: #E8EAE3; display: flex; flex-direction: column; padding: 24px 18px; min-height: 100vh; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .brand-title { font-size: 20px; font-weight: 600; }
+  .brand-sub { font-size: 12.5px; color: #9AA3AE; margin-bottom: 22px; }
+  .close-btn { display: none; margin-left: auto; color: #B7C0C9; background: none; border: none; cursor: pointer; }
+
+  .chapter-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .chapter-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; border-left: 3px solid transparent; cursor: pointer; }
+  .chapter-item:hover { background: rgba(255,255,255,0.05); }
+  .chapter-item.active { background: rgba(255,255,255,0.08); border-left: 3px solid var(--gold); }
+  .chapter-num { font-family: 'Fraunces', serif; font-size: 13px; color: #7C8794; width: 20px; flex-shrink: 0; }
+  .chapter-title { font-size: 14.5px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chapter-actions { display: none; gap: 4px; }
+  .chapter-item:hover .chapter-actions { display: flex; }
+  .icon-btn { background: transparent; border: none; color: #B7C0C9; cursor: pointer; padding: 3px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+  .icon-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+  .icon-btn.dim { color: #6B7280; }
+
+  .rename-row { display: flex; gap: 6px; padding: 6px 4px; align-items: center; }
+  .rename-row input { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; padding: 6px 8px; font-size: 13.5px; }
+  .inline-confirm { margin: 4px 0 8px 0; background: rgba(181,69,58,0.15); border: 1px solid rgba(181,69,58,0.4); padding: 10px; border-radius: 8px; font-size: 12.5px; }
+  .inline-confirm p { margin: 0 0 8px 0; color: #E8AFA8; }
+  .mini-row { display: flex; gap: 8px; }
+  .mini-btn { flex: 1; padding: 7px 0; border-radius: 6px; font-size: 13px; border: none; cursor: pointer; font-weight: 600; }
+  .mini-btn.primary { background: var(--gold); color: #1B2430; }
+  .mini-btn.ghost { background: rgba(255,255,255,0.08); color: #E8EAE3; }
+  .mini-btn.danger { background: #B5453A; color: #fff; }
+
+  .add-chapter { margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; }
+  .add-btn { display: flex; align-items: center; gap: 8px; width: 100%; background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.25); color: #E8EAE3; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13.5px; }
+  .add-btn:hover { background: rgba(255,255,255,0.1); }
+  .add-form { display: flex; flex-direction: column; gap: 8px; }
+  .add-form input { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; padding: 8px 10px; font-size: 13.5px; }
+
+  .conn-status { font-size: 11.5px; color: #6D7684; margin-top: 12px; display: flex; align-items: center; gap: 6px; }
+  .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #3E9C6E; flex-shrink: 0; }
+  .sidebar-footer-link { font-size: 12px; color: #7C8794; background: none; border: none; cursor: pointer; text-align: left; padding: 4px 0; }
+  .sidebar-footer-link:hover { color: #E8935B; }
+
+  /* ---------- main ---------- */
+  .main { flex: 1; min-width: 0; padding: 36px 44px; overflow-y: auto; }
+  .mobile-bar { display: none; }
+  .empty-state { height: 70vh; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; max-width: 460px; }
+  .empty-state h2 { font-size: 26px; margin: 14px 0 8px 0; }
+  .empty-state p { color: var(--text-dim); font-size: 15px; line-height: 1.55; margin: 0 0 18px 0; }
+
+  .chapter-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
+  .chapter-header h1 { font-size: 30px; font-weight: 600; margin: 0; line-height: 1.2; }
+  .chapter-eyebrow { font-size: 13px; color: var(--text-dim); margin: 0 0 4px 0; }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 26px; }
+  .tab { display: flex; align-items: center; gap: 7px; padding: 10px 4px; margin-right: 26px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 14.5px; color: var(--text-dim); font-weight: 500; }
+  .tab.active { color: var(--ink); border-bottom: 2px solid var(--accent); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel-empty { border: 1px dashed var(--border); border-radius: 12px; padding: 30px 26px; color: var(--text-dim); font-size: 14.5px; background: rgba(255,255,255,0.5); }
+  .panel-empty strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 15px; }
+
+  .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 22px; }
+  .form-grid { display: flex; flex-direction: column; gap: 10px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-dim); margin-bottom: 5px; }
+  .field input[type=text], .field textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-size: 14px; font-family: inherit; background: #FCFCFA; }
+  .field textarea { resize: vertical; min-height: 64px; }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+  .form-actions { display: flex; gap: 10px; margin-top: 4px; align-items: center; }
+
+  .file-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .file-choose-btn { border: 1px solid var(--border); background: #FCFCFA; padding: 8px 12px; border-radius: 8px; font-size: 13.5px; cursor: pointer; color: var(--text); }
+  .file-chosen { font-size: 13px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+  .file-chosen button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px; }
+  .uploading-note { font-size: 13px; color: var(--accent); margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .item-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; }
+  .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .item-title { font-size: 15.5px; font-weight: 600; margin: 0 0 4px 0; }
+  .item-link { font-size: 13px; color: var(--accent); word-break: break-all; text-decoration: none; }
+  .item-link:hover { text-decoration: underline; }
+  .item-desc { font-size: 14px; color: var(--text); margin: 6px 0 0 0; line-height: 1.5; white-space: pre-wrap; }
+  .item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+  .file-chip { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--accent-soft); padding: 7px 12px; border-radius: 8px; font-size: 13px; color: var(--accent); text-decoration: none; }
+  .file-chip:hover { text-decoration: underline; }
+  .file-chip .fsize { color: #5C8E76; font-size: 12px; }
+
+  .answer-toggle { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent); background: var(--accent-soft); border: none; padding: 6px 10px; border-radius: 7px; cursor: pointer; font-weight: 600; }
+  .answer-box { margin-top: 10px; background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 14px; line-height: 1.5; }
+  .mastered-row { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 12.5px; color: var(--text-dim); }
+  .mastered-row input { accent-color: var(--accent); }
+
+  .loading { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 14px; padding: 30px 0; }
+
+  @media (max-width: 780px) {
+    .sidebar { position: fixed; z-index: 20; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.25); }
+    .sidebar.open { transform: translateX(0); }
+    .close-btn { display: flex; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 15; }
+    .mobile-bar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--paper); position: sticky; top: 0; z-index: 5; }
+    .mobile-bar button { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
+    .mobile-bar span { font-weight: 600; font-size: 15px; }
+    .main { padding: 20px; }
+    .chapter-header h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ================= helpers ================= */
+function esc(s){ if (s===undefined||s===null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatBytes(b){ if (b===undefined||b===null) return ''; if (b<1024) return b+' B'; if (b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/(1024*1024)).toFixed(1)+' MB'; }
+function newId(){ return (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36)+Math.random().toString(36).slice(2,10))); }
+
+const CONFIG_KEY = 'studyBinder_supabaseConfig_v1';
+const BUCKET = 'uploads';
+
+/* ================= global state ================= */
+let sbClient = null;
+let chapters = [];
+let activeChapterId = null;
+let activeTab = 'resources';
+let resourcesCache = [], questionsCache = [], notesCache = [];
+let revealed = {};
+
+const ui = {
+  sidebarOpen: false,
+  addingChapter: false,
+  editingChapterId: null,
+  confirmDeleteChapterId: null,
+  confirmResetAll: false,
+};
+
+let pendingFile = { resource: null, question: null };
+
+/* ================= boot ================= */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(CONFIG_KEY);
+  if (saved) {
+    try { connect(JSON.parse(saved)); }
+    catch(e){ renderSetup('Saved configuration was invalid. Please enter it again.'); }
+  } else {
+    renderSetup();
+  }
+});
+
+async function connect(config){
+  try {
+    sbClient = supabase.createClient(config.url, config.anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+  } catch(e) {
+    renderSetup('Could not create a client with that URL/key: ' + e.message);
+    return;
+  }
+  const { error } = await sbClient.from('chapters').select('id').limit(1);
+  if (error) {
+    renderSetup('Connected to Supabase, but the query failed: ' + error.message + '. Make sure you ran the setup SQL script and that the URL/key are correct.');
+    return;
+  }
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+  await loadChapters();
+  renderShell();
+}
+
+function disconnect(){
+  localStorage.removeItem(CONFIG_KEY);
+  window.location.reload();
+}
+
+async function loadChapters(){
+  const { data, error } = await sbClient.from('chapters').select('*').order('created_at');
+  if (!error) chapters = data || [];
+}
+
+async function loadChapterItems(chapterId){
+  const [r, q, n] = await Promise.all([
+    sbClient.from('resources').select('*').eq('chapter_id', chapterId).order('created_at'),
+    sbClient.from('questions').select('*').eq('chapter_id', chapterId).order('created_at'),
+    sbClient.from('notes').select('*').eq('chapter_id', chapterId).order('created_at'),
+  ]);
+  resourcesCache = r.data || [];
+  questionsCache = q.data || [];
+  notesCache = n.data || [];
+}
+
+async function mountChapter(chapterId){
+  activeChapterId = chapterId;
+  activeTab = 'resources';
+  revealed = {};
+  renderMainInto();
+  renderSidebarInto();
+  await loadChapterItems(chapterId);
+  renderList('resources'); renderList('questions'); renderList('notes');
+}
+
+/* ================= setup screen ================= */
+function renderSetup(error){
+  const app = document.getElementById('app');
+  app.style.display = 'block';
+  app.innerHTML = `
+    <div class="setup-wrap">
+      <h1 class="serif">Connect Study Binder to Supabase</h1>
+      <p class="lead">This app stores your chapters, notes, and uploaded files in your own free Supabase project, so everything syncs across every device you open this page from. Takes a few minutes, one time.</p>
+      ${error ? `<div class="setup-error">${esc(error)}</div>` : ''}
+      <div class="setup-card">
+        <h2>1. Create a Supabase project</h2>
+        <ol>
+          <li>Go to <strong>supabase.com</strong>, sign up, and click "New project" (it's free, no card needed).</li>
+          <li>Once it finishes provisioning, open <strong>Project Settings &rarr; API</strong>.</li>
+          <li>Copy the <strong>Project URL</strong> and the <strong>anon public</strong> key &mdash; you'll paste both below.</li>
+        </ol>
+      </div>
+      <div class="setup-card">
+        <h2>2. Create the tables</h2>
+        <p class="hint">Open the <strong>SQL Editor</strong> in Supabase, paste this in, and click Run:</p>
+        <div class="code-block" id="sqlBlock">create table if not exists chapters (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  created_at timestamptz default now()
+);
+
+create table if not exists resources (
+  id uuid primary key default gen_random_uuid(),
+  chapter_id uuid references chapters(id) on delete cascade,
+  title text not null,
+  url text,
+  description text,
+  file_url text,
+  file_name text,
+  file_path text,
+  file_size bigint,
+  created_at timestamptz default now()
+);
+
+create table if not exists questions (
+  id uuid primary key default gen_random_uuid(),
+  chapter_id uuid references chapters(id) on delete cascade,
+  question text not null,
+  answer text,
+  mastered boolean default false,
+  file_url text,
+  file_name text,
+  file_path text,
+  file_size bigint,
+  created_at timestamptz default now()
+);
+
+create table if not exists notes (
+  id uuid primary key default gen_random_uuid(),
+  chapter_id uuid references chapters(id) on delete cascade,
+  title text not null,
+  content text,
+  created_at timestamptz default now()
+);
+
+alter table chapters enable row level security;
+alter table resources enable row level security;
+alter table questions enable row level security;
+alter table notes enable row level security;
+
+create policy "allow all chapters" on chapters for all using (true) with check (true);
+create policy "allow all resources" on resources for all using (true) with check (true);
+create policy "allow all questions" on questions for all using (true) with check (true);
+create policy "allow all notes" on notes for all using (true) with check (true);<button class="copy-btn" data-action="copy" data-target="sql">Copy</button></div>
+        <p class="hint">These policies allow full read/write access &mdash; fine here since it's your own private project just for your study data.</p>
+      </div>
+      <div class="setup-card">
+        <h2>3. Create a storage bucket for files</h2>
+        <ol>
+          <li>Open <strong>Storage</strong> in the left menu, click "New bucket".</li>
+          <li>Name it exactly <strong>uploads</strong> and toggle <strong>Public bucket</strong> ON, then create it.</li>
+        </ol>
+        <p class="hint">Then run this in the SQL Editor so uploads/deletes work through the app:</p>
+        <div class="code-block" id="storageSqlBlock">create policy "public access to uploads"
+on storage.objects for all
+using (bucket_id = 'uploads')
+with check (bucket_id = 'uploads');<button class="copy-btn" data-action="copy" data-target="storageSql">Copy</button></div>
+      </div>
+      <div class="setup-card">
+        <h2>4. Connect</h2>
+        <label class="field-label">Project URL</label>
+        <input type="text" id="sbUrl" placeholder="https://xxxxxxxx.supabase.co" />
+        <label class="field-label">anon public key</label>
+        <input type="text" id="sbKey" placeholder="eyJhbGciOi..." />
+        <div class="form-actions">
+          <button class="btn primary" id="connectBtn" data-action="connect">Connect</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+
+  if (action === 'copy') {
+    const blockId = el.dataset.target === 'sql' ? 'sqlBlock' : 'storageSqlBlock';
+    const block = document.getElementById(blockId);
+    const text = block.textContent.replace('Copy', '').trim();
+    navigator.clipboard.writeText(text).then(() => { el.textContent = 'Copied'; setTimeout(()=> el.textContent='Copy', 1400); });
+  }
+
+  if (action === 'connect') {
+    const url = document.getElementById('sbUrl').value.trim();
+    const anonKey = document.getElementById('sbKey').value.trim();
+    if (!url || !anonKey) return;
+    el.disabled = true; el.textContent = 'Connecting...';
+    connect({ url, anonKey }).then(() => {
+      el.disabled = false; el.textContent = 'Connect';
+    });
+  }
+
+  if (action === 'toggle-sidebar') { ui.sidebarOpen = true; renderSidebarInto(); }
+  if (action === 'close-sidebar') { ui.sidebarOpen = false; renderSidebarInto(); }
+  if (action === 'disconnect') { disconnect(); }
+
+  if (action === 'select-chapter') { mountChapter(el.dataset.id); ui.sidebarOpen = false; }
+  if (action === 'start-add-chapter') { ui.addingChapter = true; renderSidebarInto(); focusEl('newChapterInput'); }
+  if (action === 'cancel-add-chapter') { ui.addingChapter = false; renderSidebarInto(); }
+  if (action === 'submit-add-chapter') { submitAddChapter(); }
+  if (action === 'start-rename') { ui.editingChapterId = el.dataset.id; renderSidebarInto(); focusEl('renameInput'); }
+  if (action === 'cancel-rename') { ui.editingChapterId = null; renderSidebarInto(); }
+  if (action === 'save-rename') { submitRename(el.dataset.id); }
+  if (action === 'confirm-delete-chapter') { ui.confirmDeleteChapterId = el.dataset.id; renderSidebarInto(); }
+  if (action === 'cancel-delete-chapter') { ui.confirmDeleteChapterId = null; renderSidebarInto(); }
+  if (action === 'delete-chapter') { deleteChapter(el.dataset.id); }
+  if (action === 'confirm-reset-all') { ui.confirmResetAll = true; renderSidebarInto(); }
+  if (action === 'cancel-reset-all') { ui.confirmResetAll = false; renderSidebarInto(); }
+  if (action === 'reset-all') { resetAll(); }
+
+  if (action === 'open-resource-form') { openResourceForm(); }
+  if (action === 'close-resource-form') { closeResourceForm(); }
+  if (action === 'edit-resource') { openResourceForm(resourcesCache.find(r=>r.id===el.dataset.id)); }
+  if (action === 'delete-resource') { deleteItem('resources', el.dataset.id, resourcesCache); }
+  if (action === 'choose-resource-file') { document.getElementById('resourceFileInput').click(); }
+  if (action === 'clear-resource-file') { pendingFile.resource = null; document.getElementById('resourceFileInput').value=''; renderResourceFileRow(); }
+  if (action === 'remove-existing-resource-file') { document.getElementById('resourceFormArea').dataset.removeFile='1'; renderResourceFileRow(); }
+  if (action === 'submit-resource-form') { submitResourceForm(); }
+
+  if (action === 'open-question-form') { openQuestionForm(); }
+  if (action === 'close-question-form') { closeQuestionForm(); }
+  if (action === 'edit-question') { openQuestionForm(questionsCache.find(q=>q.id===el.dataset.id)); }
+  if (action === 'delete-question') { deleteItem('questions', el.dataset.id, questionsCache); }
+  if (action === 'choose-question-file') { document.getElementById('questionFileInput').click(); }
+  if (action === 'clear-question-file') { pendingFile.question = null; document.getElementById('questionFileInput').value=''; renderQuestionFileRow(); }
+  if (action === 'remove-existing-question-file') { document.getElementById('questionFormArea').dataset.removeFile='1'; renderQuestionFileRow(); }
+  if (action === 'submit-question-form') { submitQuestionForm(); }
+  if (action === 'toggle-answer') { revealed[el.dataset.id] = !revealed[el.dataset.id]; renderList('questions'); }
+  if (action === 'toggle-mastered') { toggleMastered(el.dataset.id); }
+
+  if (action === 'open-note-form') { openNoteForm(); }
+  if (action === 'close-note-form') { closeNoteForm(); }
+  if (action === 'edit-note') { openNoteForm(notesCache.find(n=>n.id===el.dataset.id)); }
+  if (action === 'delete-note') { deleteItem('notes', el.dataset.id, notesCache); }
+  if (action === 'submit-note-form') { submitNoteForm(); }
+});
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action="select-tab"]');
+  if (el) { activeTab = el.dataset.tab; refreshTabVisibility(); }
+}, true);
+
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'resourceFileInput') { pendingFile.resource = e.target.files[0] || null; renderResourceFileRow(); }
+  if (e.target.id === 'questionFileInput') { pendingFile.question = e.target.files[0] || null; renderQuestionFileRow(); }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id === 'newChapterInput') submitAddChapter();
+  if (e.key === 'Escape' && e.target.id === 'newChapterInput') { ui.addingChapter=false; renderSidebarInto(); }
+  if (e.key === 'Enter' && e.target.id === 'renameInput') submitRename(ui.editingChapterId);
+  if (e.key === 'Escape' && e.target.id === 'renameInput') { ui.editingChapterId=null; renderSidebarInto(); }
+});
+
+function focusEl(id){ setTimeout(()=>{ const el = document.getElementById(id); if (el) el.focus(); }, 30); }
+
+/* ================= shell / sidebar / main skeleton ================= */
+function renderShell(){
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  app.innerHTML = `
+    <div id="overlay"></div>
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main" id="main"></main>
+  `;
+  renderSidebarInto();
+  renderMainInto();
+}
+
+function renderSidebarInto(){
+  const el = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  if (!el) return;
+  el.className = 'sidebar' + (ui.sidebarOpen ? ' open' : '');
+  if (overlay) overlay.outerHTML = ui.sidebarOpen ? '<div class="overlay" id="overlay" data-action="close-sidebar"></div>' : '<div id="overlay"></div>';
+
+  let chapterRows = '';
+  if (chapters.length === 0) {
+    chapterRows = '<div style="font-size:13px;color:#7C8794;padding:10px 4px;">No chapters yet. Add your first one below.</div>';
+  } else {
+    chapters.forEach((c, idx) => {
+      if (ui.editingChapterId === c.id) {
+        chapterRows += `
+          <div class="rename-row">
+            <input id="renameInput" type="text" value="${esc(c.title)}" />
+            <button class="icon-btn" data-action="save-rename" data-id="${c.id}">&#10003;</button>
+            <button class="icon-btn" data-action="cancel-rename">&#10005;</button>
+          </div>`;
+      } else {
+        chapterRows += `
+          <div class="chapter-item ${activeChapterId===c.id?'active':''}" data-action="select-chapter" data-id="${c.id}">
+            <span class="chapter-num">${String(idx+1).padStart(2,'0')}</span>
+            <span class="chapter-title">${esc(c.title)}</span>
+            <span class="chapter-actions">
+              <button class="icon-btn" data-action="start-rename" data-id="${c.id}" onclick="event.stopPropagation()">&#9998;</button>
+              <button class="icon-btn" data-action="confirm-delete-chapter" data-id="${c.id}" onclick="event.stopPropagation()">&#128465;</button>
+            </span>
+          </div>`;
+      }
+      if (ui.confirmDeleteChapterId === c.id) {
+        chapterRows += `
+          <div class="inline-confirm">
+            <p>Delete "${esc(c.title)}" and everything in it?</p>
+            <div class="mini-row">
+              <button class="mini-btn ghost" data-action="cancel-delete-chapter">Cancel</button>
+              <button class="mini-btn danger" data-action="delete-chapter" data-id="${c.id}">Delete</button>
+            </div>
+          </div>`;
+      }
+    });
+  }
+
+  let addArea = '';
+  if (ui.addingChapter) {
+    addArea = `
+      <div class="add-form">
+        <input id="newChapterInput" type="text" placeholder="Chapter title" />
+        <div class="mini-row">
+          <button class="mini-btn ghost" data-action="cancel-add-chapter">Cancel</button>
+          <button class="mini-btn primary" data-action="submit-add-chapter">Add</button>
+        </div>
+      </div>`;
+  } else {
+    addArea = `<button class="add-btn" data-action="start-add-chapter">&#43; New chapter</button>`;
+  }
+
+  let resetArea = '';
+  if (chapters.length > 0) {
+    if (ui.confirmResetAll) {
+      resetArea = `
+        <div class="inline-confirm">
+          <p>Erase all chapters and their content? This can't be undone.</p>
+          <div class="mini-row">
+            <button class="mini-btn ghost" data-action="cancel-reset-all">Cancel</button>
+            <button class="mini-btn danger" data-action="reset-all">Erase all</button>
+          </div>
+        </div>`;
+    } else {
+      resetArea = `<button class="sidebar-footer-link" data-action="confirm-reset-all">Clear all data</button>`;
+    }
+  }
+
+  el.innerHTML = `
+    <div class="brand">
+      <span class="serif brand-title">Study Binder</span>
+      <button class="close-btn" data-action="close-sidebar">&#10005;</button>
+    </div>
+    <div class="brand-sub">Organize every chapter in one place</div>
+    <div class="chapter-list">${chapterRows}</div>
+    <div class="add-chapter">
+      ${addArea}
+      ${resetArea}
+      <div class="conn-status"><span class="conn-dot"></span>Synced to your Supabase project</div>
+      <button class="sidebar-footer-link" data-action="disconnect">Disconnect this device</button>
+    </div>
+  `;
+}
+
+function renderMainInto(){
+  const el = document.getElementById('main');
+  if (!el) return;
+  const chapter = chapters.find(c => c.id === activeChapterId);
+
+  el.innerHTML = `
+    <div class="mobile-bar">
+      <button data-action="toggle-sidebar">&#9776;</button>
+      <span>${chapter ? esc(chapter.title) : 'Study Binder'}</span>
+    </div>
+    ${!chapter ? `
+      <div class="empty-state">
+        <h2 class="serif">Pick a chapter, or start one</h2>
+        <p>Each chapter holds its own resources, questions, and notes, so your material stays organized exactly the way your course is structured &mdash; and it's synced to every device you open this page from.</p>
+        ${chapters.length===0 ? `<button class="btn primary" data-action="start-add-chapter">&#43; Create your first chapter</button>` : ''}
+      </div>
+    ` : `
+      <div class="chapter-header">
+        <div>
+          <p class="chapter-eyebrow">Chapter ${String(chapters.findIndex(c=>c.id===chapter.id)+1).padStart(2,'0')}</p>
+          <h1 class="serif">${esc(chapter.title)}</h1>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab ${activeTab==='resources'?'active':''}" data-action="select-tab" data-tab="resources">Resources</button>
+        <button class="tab ${activeTab==='questions'?'active':''}" data-action="select-tab" data-tab="questions">Questions</button>
+        <button class="tab ${activeTab==='notes'?'active':''}" data-action="select-tab" data-tab="notes">Notes</button>
+      </div>
+
+      <div class="panel ${activeTab==='resources'?'active':''}" id="panel-resources">
+        <div id="resourceFormArea"><button class="btn primary" data-action="open-resource-form">&#43; Add resource</button></div>
+        <div id="resourceList"><div class="loading">Loading&hellip;</div></div>
+      </div>
+      <div class="panel ${activeTab==='questions'?'active':''}" id="panel-questions">
+        <div id="questionFormArea"><button class="btn primary" data-action="open-question-form">&#43; Add question</button></div>
+        <div id="questionList"><div class="loading">Loading&hellip;</div></div>
+      </div>
+      <div class="panel ${activeTab==='notes'?'active':''}" id="panel-notes">
+        <div id="noteFormArea"><button class="btn primary" data-action="open-note-form">&#43; Add note</button></div>
+        <div id="noteList"><div class="loading">Loading&hellip;</div></div>
+      </div>
+    `}
+  `;
+}
+
+function refreshTabVisibility(){
+  ['resources','questions','notes'].forEach(k => {
+    const p = document.getElementById('panel-'+k);
+    if (p) p.className = 'panel' + (activeTab===k ? ' active' : '');
+    const t = document.querySelector('.tab[data-tab="'+k+'"]');
+    if (t) t.className = 'tab' + (activeTab===k ? ' active' : '');
+  });
+}
+
+/* ================= chapters CRUD ================= */
+async function submitAddChapter(){
+  const input = document.getElementById('newChapterInput');
+  const title = input ? input.value.trim() : '';
+  if (!title) return;
+  const { data, error } = await sbClient.from('chapters').insert({ title }).select().single();
+  if (error) { alert('Could not add chapter: ' + error.message); return; }
+  ui.addingChapter = false;
+  await loadChapters();
+  mountChapter(data.id);
+}
+
+async function submitRename(id){
+  const input = document.getElementById('renameInput');
+  const title = input ? input.value.trim() : '';
+  ui.editingChapterId = null;
+  if (!title) { renderSidebarInto(); return; }
+  await sbClient.from('chapters').update({ title }).eq('id', id);
+  await loadChapters();
+  renderSidebarInto();
+}
+
+async function deleteChapter(id){
+  ui.confirmDeleteChapterId = null;
+  const [r, q] = await Promise.all([
+    sbClient.from('resources').select('file_path').eq('chapter_id', id),
+    sbClient.from('questions').select('file_path').eq('chapter_id', id),
+  ]);
+  const paths = [...(r.data||[]), ...(q.data||[])].map(x => x.file_path).filter(Boolean);
+  if (paths.length) await sbClient.storage.from(BUCKET).remove(paths);
+  await sbClient.from('chapters').delete().eq('id', id);
+  if (activeChapterId === id) activeChapterId = null;
+  await loadChapters();
+  renderSidebarInto();
+  renderMainInto();
+}
+
+async function resetAll(){
+  ui.confirmResetAll = false;
+  const ids = chapters.map(c => c.id);
+  for (const id of ids) await deleteChapter(id);
+  await loadChapters();
+  renderSidebarInto();
+  renderMainInto();
+}
+
+/* ================= generic item delete ================= */
+async function deleteItem(kind, id, cache){
+  const item = cache.find(i => i.id === id);
+  if (item && item.file_path) { await sbClient.storage.from(BUCKET).remove([item.file_path]); }
+  await sbClient.from(kind).delete().eq('id', id);
+  await loadChapterItems(activeChapterId);
+  renderList(kind);
+}
+
+async function uploadFile(path, file){
+  const { error } = await sbClient.storage.from(BUCKET).upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = sbClient.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function renderList(kind){
+  if (kind === 'resources') return renderResourceList();
+  if (kind === 'questions') return renderQuestionList();
+  if (kind === 'notes') return renderNoteList();
+}
+
+/* ================= resources ================= */
+function openResourceForm(item){
+  const box = document.getElementById('resourceFormArea');
+  box.dataset.removeFile = '';
+  box.__editingItem = item || null;
+  pendingFile.resource = null;
+  box.innerHTML = `
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field"><label>Title</label>
+          <input type="text" id="resTitle" value="${item?esc(item.title):''}" placeholder="e.g. Lecture slides, Chapter 3 PDF" />
+        </div>
+        <div class="field"><label>Link (optional)</label>
+          <input type="text" id="resUrl" value="${item?esc(item.url||''):''}" placeholder="Paste a URL to the resource" />
+        </div>
+        <div class="field"><label>Notes (optional)</label>
+          <textarea id="resDesc" placeholder="What this resource covers">${item?esc(item.description||''):''}</textarea>
+        </div>
+        <div class="field"><label>Attach a file (optional)</label>
+          <div id="resFileRow"></div>
+          <input type="file" id="resourceFileInput" style="display:none" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" data-action="submit-resource-form">&#10003; ${item?'Save changes':'Add resource'}</button>
+        <button class="btn text" data-action="close-resource-form">Cancel</button>
+      </div>
+      <div id="resUploadingNote"></div>
+    </div>`;
+  renderResourceFileRow();
+  focusEl('resTitle');
+}
+function closeResourceForm(){
+  pendingFile.resource = null;
+  document.getElementById('resourceFormArea').innerHTML = `<button class="btn primary" data-action="open-resource-form">&#43; Add resource</button>`;
+}
+function renderResourceFileRow(){
+  const row = document.getElementById('resFileRow');
+  if (!row) return;
+  const box = document.getElementById('resourceFormArea');
+  const editingItem = box.__editingItem;
+  const removing = box.dataset.removeFile === '1';
+  let html = '';
+  if (pendingFile.resource) {
+    html = `<div class="file-row"><span class="file-chosen">${esc(pendingFile.resource.name)} (${formatBytes(pendingFile.resource.size)}) <button data-action="clear-resource-file">remove</button></span></div>`;
+  } else if (editingItem && editingItem.file_name && !removing) {
+    html = `<div class="file-row"><span class="file-chosen">Current: ${esc(editingItem.file_name)} <button data-action="remove-existing-resource-file">remove</button></span></div>`;
+  } else {
+    html = `<button class="file-choose-btn" type="button" data-action="choose-resource-file">Choose file</button>`;
+  }
+  row.innerHTML = html;
+}
+async function submitResourceForm(){
+  const box = document.getElementById('resourceFormArea');
+  const editingItem = box.__editingItem;
+  const title = document.getElementById('resTitle').value.trim();
+  const url = document.getElementById('resUrl').value.trim();
+  const description = document.getElementById('resDesc').value.trim();
+  if (!title) return;
+
+  const submitBtn = box.querySelector('[data-action="submit-resource-form"]');
+  submitBtn.disabled = true;
+  const file = pendingFile.resource;
+  const removeFile = box.dataset.removeFile === '1';
+  const data = { title, url, description };
+
+  try {
+    const id = editingItem ? editingItem.id : newId();
+    if (editingItem && removeFile && editingItem.file_path) {
+      await sbClient.storage.from(BUCKET).remove([editingItem.file_path]);
+      data.file_url = null; data.file_name = null; data.file_path = null; data.file_size = null;
+    }
+    if (file) {
+      document.getElementById('resUploadingNote').innerHTML = `<div class="uploading-note"><span class="spinner"></span>Uploading file&hellip;</div>`;
+      const path = `resources/${activeChapterId}/${id}/${file.name}`;
+      const url2 = await uploadFile(path, file);
+      data.file_url = url2; data.file_name = file.name; data.file_path = path; data.file_size = file.size;
+    }
+    if (editingItem) {
+      await sbClient.from('resources').update(data).eq('id', id);
+    } else {
+      data.id = id; data.chapter_id = activeChapterId;
+      await sbClient.from('resources').insert(data);
+    }
+    closeResourceForm();
+    await loadChapterItems(activeChapterId);
+    renderList('resources');
+  } catch(e) {
+    submitBtn.disabled = false;
+    alert('Could not save: ' + e.message);
+  }
+}
+function renderResourceList(){
+  const el = document.getElementById('resourceList');
+  if (!el) return;
+  if (resourcesCache.length === 0) {
+    el.innerHTML = `<div class="panel-empty"><strong>No resources here yet</strong>Add links, files, or notes on where material lives, so everything for this chapter stays in one place.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="list">` + resourcesCache.map(it => `
+    <div class="item-card">
+      <div class="item-top">
+        <div style="flex:1;min-width:0;">
+          <p class="item-title">${esc(it.title)}</p>
+          ${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noreferrer" class="item-link">${esc(it.url)}</a>` : ''}
+          ${it.description ? `<p class="item-desc">${esc(it.description)}</p>` : ''}
+          ${it.file_url ? `<a href="${esc(it.file_url)}" target="_blank" rel="noreferrer" class="file-chip">&#128206; ${esc(it.file_name||'file')} <span class="fsize">${formatBytes(it.file_size)}</span></a>` : ''}
+        </div>
+        <div class="item-actions">
+          <button class="icon-btn dim" data-action="edit-resource" data-id="${it.id}">&#9998;</button>
+          <button class="icon-btn dim" data-action="delete-resource" data-id="${it.id}">&#128465;</button>
+        </div>
+      </div>
+    </div>`).join('') + `</div>`;
+}
+
+/* ================= questions ================= */
+function openQuestionForm(item){
+  const box = document.getElementById('questionFormArea');
+  box.dataset.removeFile = '';
+  box.__editingItem = item || null;
+  pendingFile.question = null;
+  box.innerHTML = `
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field"><label>Question</label>
+          <textarea id="qQuestion" placeholder="What question should this chapter help you answer?">${item?esc(item.question):''}</textarea>
+        </div>
+        <div class="field"><label>Answer (optional)</label>
+          <textarea id="qAnswer" placeholder="Write the answer so you can self-test later">${item?esc(item.answer||''):''}</textarea>
+        </div>
+        <div class="field"><label>Attach a file (optional)</label>
+          <div id="qFileRow"></div>
+          <input type="file" id="questionFileInput" style="display:none" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" data-action="submit-question-form">&#10003; ${item?'Save changes':'Add question'}</button>
+        <button class="btn text" data-action="close-question-form">Cancel</button>
+      </div>
+      <div id="qUploadingNote"></div>
+    </div>`;
+  renderQuestionFileRow();
+  focusEl('qQuestion');
+}
+function closeQuestionForm(){
+  pendingFile.question = null;
+  document.getElementById('questionFormArea').innerHTML = `<button class="btn primary" data-action="open-question-form">&#43; Add question</button>`;
+}
+function renderQuestionFileRow(){
+  const row = document.getElementById('qFileRow');
+  if (!row) return;
+  const box = document.getElementById('questionFormArea');
+  const editingItem = box.__editingItem;
+  const removing = box.dataset.removeFile === '1';
+  let html = '';
+  if (pendingFile.question) {
+    html = `<div class="file-row"><span class="file-chosen">${esc(pendingFile.question.name)} (${formatBytes(pendingFile.question.size)}) <button data-action="clear-question-file">remove</button></span></div>`;
+  } else if (editingItem && editingItem.file_name && !removing) {
+    html = `<div class="file-row"><span class="file-chosen">Current: ${esc(editingItem.file_name)} <button data-action="remove-existing-question-file">remove</button></span></div>`;
+  } else {
+    html = `<button class="file-choose-btn" type="button" data-action="choose-question-file">Choose file</button>`;
+  }
+  row.innerHTML = html;
+}
+async function submitQuestionForm(){
+  const box = document.getElementById('questionFormArea');
+  const editingItem = box.__editingItem;
+  const question = document.getElementById('qQuestion').value.trim();
+  const answer = document.getElementById('qAnswer').value.trim();
+  if (!question) return;
+
+  const submitBtn = box.querySelector('[data-action="submit-question-form"]');
+  submitBtn.disabled = true;
+  const file = pendingFile.question;
+  const removeFile = box.dataset.removeFile === '1';
+  const data = { question, answer };
+
+  try {
+    const id = editingItem ? editingItem.id : newId();
+    if (editingItem && removeFile && editingItem.file_path) {
+      await sbClient.storage.from(BUCKET).remove([editingItem.file_path]);
+      data.file_url = null; data.file_name = null; data.file_path = null; data.file_size = null;
+    }
+    if (file) {
+      document.getElementById('qUploadingNote').innerHTML = `<div class="uploading-note"><span class="spinner"></span>Uploading file&hellip;</div>`;
+      const path = `questions/${activeChapterId}/${id}/${file.name}`;
+      const url2 = await uploadFile(path, file);
+      data.file_url = url2; data.file_name = file.name; data.file_path = path; data.file_size = file.size;
+    }
+    if (editingItem) {
+      await sbClient.from('questions').update(data).eq('id', id);
+    } else {
+      data.id = id; data.chapter_id = activeChapterId; data.mastered = false;
+      await sbClient.from('questions').insert(data);
+    }
+    closeQuestionForm();
+    await loadChapterItems(activeChapterId);
+    renderList('questions');
+  } catch(e) {
+    submitBtn.disabled = false;
+    alert('Could not save: ' + e.message);
+  }
+}
+async function toggleMastered(id){
+  const item = questionsCache.find(q => q.id === id);
+  if (!item) return;
+  await sbClient.from('questions').update({ mastered: !item.mastered }).eq('id', id);
+  await loadChapterItems(activeChapterId);
+  renderList('questions');
+}
+function renderQuestionList(){
+  const el = document.getElementById('questionList');
+  if (!el) return;
+  if (questionsCache.length === 0) {
+    el.innerHTML = `<div class="panel-empty"><strong>No questions yet</strong>Add the questions you expect to be tested on, with answers, and quiz yourself by revealing them one at a time.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="list">` + questionsCache.map(it => `
+    <div class="item-card">
+      <div class="item-top">
+        <div style="flex:1;min-width:0;">
+          <p class="item-title">${esc(it.question)}</p>
+          ${it.answer ? `
+            <button class="answer-toggle" data-action="toggle-answer" data-id="${it.id}">${revealed[it.id]?'Hide answer':'Reveal answer'}</button>
+            ${revealed[it.id] ? `<div class="answer-box">${esc(it.answer)}</div>` : ''}
+          ` : ''}
+          ${it.file_url ? `<div><a href="${esc(it.file_url)}" target="_blank" rel="noreferrer" class="file-chip">&#128206; ${esc(it.file_name||'file')} <span class="fsize">${formatBytes(it.file_size)}</span></a></div>` : ''}
+          <div class="mastered-row">
+            <input type="checkbox" ${it.mastered?'checked':''} data-action="toggle-mastered" data-id="${it.id}" onclick="event.stopPropagation()" />
+            Comfortable with this one
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="icon-btn dim" data-action="edit-question" data-id="${it.id}">&#9998;</button>
+          <button class="icon-btn dim" data-action="delete-question" data-id="${it.id}">&#128465;</button>
+        </div>
+      </div>
+    </div>`).join('') + `</div>`;
+}
+
+/* ================= notes ================= */
+function openNoteForm(item){
+  const box = document.getElementById('noteFormArea');
+  box.__editingItem = item || null;
+  box.innerHTML = `
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field"><label>Title</label>
+          <input type="text" id="noteTitle" value="${item?esc(item.title):''}" placeholder="e.g. Key definitions" />
+        </div>
+        <div class="field"><label>Note</label>
+          <textarea id="noteContent" style="min-height:120px" placeholder="Write your notes for this chapter">${item?esc(item.content||''):''}</textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" data-action="submit-note-form">&#10003; ${item?'Save changes':'Add note'}</button>
+        <button class="btn text" data-action="close-note-form">Cancel</button>
+      </div>
+    </div>`;
+  focusEl('noteTitle');
+}
+function closeNoteForm(){
+  document.getElementById('noteFormArea').innerHTML = `<button class="btn primary" data-action="open-note-form">&#43; Add note</button>`;
+}
+async function submitNoteForm(){
+  const box = document.getElementById('noteFormArea');
+  const editingItem = box.__editingItem;
+  const title = document.getElementById('noteTitle').value.trim() || 'Untitled note';
+  const content = document.getElementById('noteContent').value.trim();
+  if (!title && !content) return;
+  if (editingItem) {
+    await sbClient.from('notes').update({ title, content }).eq('id', editingItem.id);
+  } else {
+    await sbClient.from('notes').insert({ id: newId(), chapter_id: activeChapterId, title, content });
+  }
+  closeNoteForm();
+  await loadChapterItems(activeChapterId);
+  renderList('notes');
+}
+function renderNoteList(){
+  const el = document.getElementById('noteList');
+  if (!el) return;
+  if (notesCache.length === 0) {
+    el.innerHTML = `<div class="panel-empty"><strong>No notes yet</strong>Jot down summaries, definitions, or anything worth remembering from this chapter.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="list">` + notesCache.map(it => `
+    <div class="item-card">
+      <div class="item-top">
+        <div style="flex:1;min-width:0;">
+          <p class="item-title">${esc(it.title)}</p>
+          ${it.content ? `<p class="item-desc">${esc(it.content)}</p>` : ''}
+        </div>
+        <div class="item-actions">
+          <button class="icon-btn dim" data-action="edit-note" data-id="${it.id}">&#9998;</button>
+          <button class="icon-btn dim" data-action="delete-note" data-id="${it.id}">&#128465;</button>
+        </div>
+      </div>
+    </div>`).join('') + `</div>`;
+}
+</script>
+</body>
+</html>
