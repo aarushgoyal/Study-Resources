@@ -69,11 +69,40 @@
   .sidebar { width: 272px; flex-shrink: 0; background: var(--ink); color: #E8EAE3; display: flex; flex-direction: column; padding: 24px 18px; min-height: 100vh; }
   .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .brand-title { font-size: 20px; font-weight: 600; }
-  .brand-sub { font-size: 12.5px; color: #9AA3AE; margin-bottom: 22px; }
+  .brand-sub { font-size: 12.5px; color: #9AA3AE; margin-bottom: 18px; }
   .close-btn { display: none; margin-left: auto; color: #B7C0C9; background: none; border: none; cursor: pointer; }
+
+  .search-wrap { position: relative; margin-bottom: 12px; }
+  #searchInput {
+    width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; color: #fff; padding: 9px 11px; font-size: 13.5px; font-family: inherit;
+  }
+  #searchInput::placeholder { color: #8B94A0; }
+  #searchInput:focus { outline: none; border-color: var(--gold); }
+  #searchDropdown {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: #fff; color: var(--text); border-radius: 10px; box-shadow: 0 14px 30px rgba(0,0,0,0.28);
+    max-height: 320px; overflow-y: auto; z-index: 30; padding: 6px 0;
+  }
+  #searchDropdown.open { display: block; }
+  .search-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); padding: 8px 12px 4px; }
+  .search-result-item { padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; }
+  .search-result-item:hover { background: var(--accent-soft); }
+  .search-result-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .search-result-chapter { color: var(--text-dim); font-size: 12px; flex-shrink: 0; }
+  .search-empty { padding: 10px 12px; font-size: 13px; color: var(--text-dim); }
+
+  .quiz-nav-btn {
+    width: 100%; background: rgba(192,138,46,0.15); border: 1px solid rgba(192,138,46,0.35);
+    color: #F0D9A8; padding: 9px 10px; border-radius: 8px; font-size: 13.5px; cursor: pointer;
+    margin-bottom: 14px; text-align: left; font-family: inherit;
+  }
+  .quiz-nav-btn:hover { background: rgba(192,138,46,0.25); }
 
   .chapter-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
   .chapter-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; border-left: 3px solid transparent; cursor: pointer; }
+  .chapter-item[draggable="true"] { cursor: grab; }
+  .chapter-item.drag-over { box-shadow: inset 0 2px 0 var(--gold); }
   .chapter-item:hover { background: rgba(255,255,255,0.05); }
   .chapter-item.active { background: rgba(255,255,255,0.08); border-left: 3px solid var(--gold); }
   .chapter-num { font-family: 'Fraunces', serif; font-size: 13px; color: #7C8794; width: 20px; flex-shrink: 0; }
@@ -102,15 +131,21 @@
 
   .conn-status { font-size: 11.5px; color: #6D7684; margin-top: 12px; display: flex; align-items: center; gap: 6px; }
   .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #3E9C6E; flex-shrink: 0; }
-  .sidebar-footer-link { font-size: 12px; color: #7C8794; background: none; border: none; cursor: pointer; text-align: left; padding: 4px 0; }
+  .sidebar-footer-link { font-size: 12px; color: #7C8794; background: none; border: none; cursor: pointer; text-align: left; padding: 4px 0; display: block; }
   .sidebar-footer-link:hover { color: #E8935B; }
 
   /* ---------- main ---------- */
   .main { flex: 1; min-width: 0; padding: 36px 44px; overflow-y: auto; }
   .mobile-bar { display: none; }
-  .empty-state { height: 70vh; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; max-width: 460px; }
+  .empty-state { min-height: 70vh; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; max-width: 620px; }
   .empty-state h2 { font-size: 26px; margin: 14px 0 8px 0; }
   .empty-state p { color: var(--text-dim); font-size: 15px; line-height: 1.55; margin: 0 0 18px 0; }
+
+  .dashboard-stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 22px 0; }
+  .stat-tile { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; min-width: 92px; }
+  .stat-tile strong { display: block; font-size: 21px; font-family: 'Fraunces', serif; }
+  .stat-tile span { font-size: 12px; color: var(--text-dim); }
+  .stat-tile.accent { border-color: var(--accent); background: var(--accent-soft); }
 
   .chapter-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
   .chapter-header h1 { font-size: 30px; font-weight: 600; margin: 0; line-height: 1.2; }
@@ -150,9 +185,14 @@
   .item-desc { font-size: 14px; color: var(--text); margin: 6px 0 0 0; line-height: 1.5; white-space: pre-wrap; }
   .item-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
-  .file-chip { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--accent-soft); padding: 7px 12px; border-radius: 8px; font-size: 13px; color: var(--accent); text-decoration: none; }
+  .file-row-view { margin-top: 10px; }
+  .file-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft); padding: 7px 12px; border-radius: 8px; font-size: 13px; color: var(--accent); text-decoration: none; }
   .file-chip:hover { text-decoration: underline; }
   .file-chip .fsize { color: #5C8E76; font-size: 12px; }
+  .preview-toggle { background: none; border: none; color: var(--accent); font-size: 12.5px; cursor: pointer; margin-left: 8px; text-decoration: underline; }
+  .preview-box { margin-top: 10px; }
+  .preview-box img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
+  .preview-box iframe { width: 100%; height: 420px; border: 1px solid var(--border); border-radius: 8px; }
 
   .answer-toggle { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent); background: var(--accent-soft); border: none; padding: 6px 10px; border-radius: 7px; cursor: pointer; font-weight: 600; }
   .answer-box { margin-top: 10px; background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 14px; line-height: 1.5; }
@@ -160,6 +200,12 @@
   .mastered-row input { accent-color: var(--accent); }
 
   .loading { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 14px; padding: 30px 0; }
+
+  .quiz-wrap { max-width: 560px; }
+  .quiz-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .quiz-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 26px 24px; }
+  .quiz-question { font-size: 19px; font-weight: 600; line-height: 1.4; margin: 0 0 6px 0; }
+  .quiz-actions { display: flex; gap: 10px; margin-top: 18px; }
 
   @media (max-width: 780px) {
     .sidebar { position: fixed; z-index: 20; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.25); }
@@ -182,6 +228,10 @@
 function esc(s){ if (s===undefined||s===null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function formatBytes(b){ if (b===undefined||b===null) return ''; if (b<1024) return b+' B'; if (b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/(1024*1024)).toFixed(1)+' MB'; }
 function newId(){ return (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36)+Math.random().toString(36).slice(2,10))); }
+function shuffleArray(arr){ for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+function fileExt(name){ return (name||'').split('.').pop().toLowerCase(); }
+function isImageExt(ext){ return ['png','jpg','jpeg','gif','webp','svg'].includes(ext); }
+function isPdfExt(ext){ return ext === 'pdf'; }
 
 const CONFIG_KEY = 'studyBinder_supabaseConfig_v1';
 const BUCKET = 'uploads';
@@ -193,6 +243,11 @@ let activeChapterId = null;
 let activeTab = 'resources';
 let resourcesCache = [], questionsCache = [], notesCache = [];
 let revealed = {};
+let searchTerm = '';
+let dragSourceId = null;
+let searchDebounceTimer = null;
+
+const quiz = { active: false, queue: [], index: 0, correct: 0, wrong: 0, revealed: false };
 
 const ui = {
   sidebarOpen: false,
@@ -240,8 +295,11 @@ function disconnect(){
 }
 
 async function loadChapters(){
-  const { data, error } = await sbClient.from('chapters').select('*').order('created_at');
-  if (!error) chapters = data || [];
+  let { data, error } = await sbClient.from('chapters').select('*').order('position', { ascending: true, nullsFirst: false });
+  if (error) {
+    ({ data, error } = await sbClient.from('chapters').select('*').order('created_at', { ascending: true }));
+  }
+  chapters = data || [];
 }
 
 async function loadChapterItems(chapterId){
@@ -255,12 +313,13 @@ async function loadChapterItems(chapterId){
   notesCache = n.data || [];
 }
 
-async function mountChapter(chapterId){
+async function mountChapter(chapterId, initialTab){
+  quiz.active = false;
   activeChapterId = chapterId;
-  activeTab = 'resources';
+  activeTab = initialTab || 'resources';
   revealed = {};
   renderMainInto();
-  renderSidebarInto();
+  renderChapterList();
   await loadChapterItems(chapterId);
   renderList('resources'); renderList('questions'); renderList('notes');
 }
@@ -272,7 +331,7 @@ function renderSetup(error){
   app.innerHTML = `
     <div class="setup-wrap">
       <h1 class="serif">Connect Study Binder to Supabase</h1>
-      <p class="lead">This app stores your chapters, notes, and uploaded files in your own free Supabase project, so everything syncs across every device you open this page from. Takes a few minutes, one time.</p>
+      <p class="lead">This app stores your chapters, notes, and uploaded files in your own free Supabase project, so everything syncs across every device you open this page from.</p>
       ${error ? `<div class="setup-error">${esc(error)}</div>` : ''}
       <div class="setup-card">
         <h2>1. Create a Supabase project</h2>
@@ -288,6 +347,7 @@ function renderSetup(error){
         <div class="code-block" id="sqlBlock">create table if not exists chapters (
   id uuid primary key default gen_random_uuid(),
   title text not null,
+  position bigint,
   created_at timestamptz default now()
 );
 
@@ -325,16 +385,10 @@ create table if not exists notes (
   created_at timestamptz default now()
 );
 
-alter table chapters enable row level security;
-alter table resources enable row level security;
-alter table questions enable row level security;
-alter table notes enable row level security;
-
-create policy "allow all chapters" on chapters for all using (true) with check (true);
-create policy "allow all resources" on resources for all using (true) with check (true);
-create policy "allow all questions" on questions for all using (true) with check (true);
-create policy "allow all notes" on notes for all using (true) with check (true);<button class="copy-btn" data-action="copy" data-target="sql">Copy</button></div>
-        <p class="hint">These policies allow full read/write access &mdash; fine here since it's your own private project just for your study data.</p>
+alter table chapters disable row level security;
+alter table resources disable row level security;
+alter table questions disable row level security;
+alter table notes disable row level security;<button class="copy-btn" data-action="copy" data-target="sql">Copy</button></div>
       </div>
       <div class="setup-card">
         <h2>3. Create a storage bucket for files</h2>
@@ -343,7 +397,8 @@ create policy "allow all notes" on notes for all using (true) with check (true);
           <li>Name it exactly <strong>uploads</strong> and toggle <strong>Public bucket</strong> ON, then create it.</li>
         </ol>
         <p class="hint">Then run this in the SQL Editor so uploads/deletes work through the app:</p>
-        <div class="code-block" id="storageSqlBlock">create policy "public access to uploads"
+        <div class="code-block" id="storageSqlBlock">drop policy if exists "public access to uploads" on storage.objects;
+create policy "public access to uploads"
 on storage.objects for all
 using (bucket_id = 'uploads')
 with check (bucket_id = 'uploads');<button class="copy-btn" data-action="copy" data-target="storageSql">Copy</button></div>
@@ -362,6 +417,7 @@ with check (bucket_id = 'uploads');<button class="copy-btn" data-action="copy" d
   `;
 }
 
+/* ================= global click delegation ================= */
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
@@ -379,28 +435,48 @@ document.addEventListener('click', (e) => {
     const anonKey = document.getElementById('sbKey').value.trim();
     if (!url || !anonKey) return;
     el.disabled = true; el.textContent = 'Connecting...';
-    connect({ url, anonKey }).then(() => {
-      el.disabled = false; el.textContent = 'Connect';
-    });
+    connect({ url, anonKey }).then(() => { el.disabled = false; el.textContent = 'Connect'; });
   }
 
-  if (action === 'toggle-sidebar') { ui.sidebarOpen = true; renderSidebarInto(); }
-  if (action === 'close-sidebar') { ui.sidebarOpen = false; renderSidebarInto(); }
+  if (action === 'toggle-sidebar') { ui.sidebarOpen = true; setSidebarOpenState(); }
+  if (action === 'close-sidebar') { ui.sidebarOpen = false; setSidebarOpenState(); }
   if (action === 'disconnect') { disconnect(); }
 
-  if (action === 'select-chapter') { mountChapter(el.dataset.id); ui.sidebarOpen = false; }
-  if (action === 'start-add-chapter') { ui.addingChapter = true; renderSidebarInto(); focusEl('newChapterInput'); }
-  if (action === 'cancel-add-chapter') { ui.addingChapter = false; renderSidebarInto(); }
+  if (action === 'select-chapter') { mountChapter(el.dataset.id); ui.sidebarOpen = false; setSidebarOpenState(); }
+  if (action === 'start-add-chapter') { ui.addingChapter = true; renderAddArea(); focusEl('newChapterInput'); }
+  if (action === 'cancel-add-chapter') { ui.addingChapter = false; renderAddArea(); }
   if (action === 'submit-add-chapter') { submitAddChapter(); }
-  if (action === 'start-rename') { ui.editingChapterId = el.dataset.id; renderSidebarInto(); focusEl('renameInput'); }
-  if (action === 'cancel-rename') { ui.editingChapterId = null; renderSidebarInto(); }
+  if (action === 'start-rename') { ui.editingChapterId = el.dataset.id; renderChapterList(); focusEl('renameInput'); }
+  if (action === 'cancel-rename') { ui.editingChapterId = null; renderChapterList(); }
   if (action === 'save-rename') { submitRename(el.dataset.id); }
-  if (action === 'confirm-delete-chapter') { ui.confirmDeleteChapterId = el.dataset.id; renderSidebarInto(); }
-  if (action === 'cancel-delete-chapter') { ui.confirmDeleteChapterId = null; renderSidebarInto(); }
+  if (action === 'confirm-delete-chapter') { ui.confirmDeleteChapterId = el.dataset.id; renderChapterList(); }
+  if (action === 'cancel-delete-chapter') { ui.confirmDeleteChapterId = null; renderChapterList(); }
   if (action === 'delete-chapter') { deleteChapter(el.dataset.id); }
-  if (action === 'confirm-reset-all') { ui.confirmResetAll = true; renderSidebarInto(); }
-  if (action === 'cancel-reset-all') { ui.confirmResetAll = false; renderSidebarInto(); }
+  if (action === 'confirm-reset-all') { ui.confirmResetAll = true; renderAddArea(); }
+  if (action === 'cancel-reset-all') { ui.confirmResetAll = false; renderAddArea(); }
   if (action === 'reset-all') { resetAll(); }
+
+  if (action === 'export-data') { exportAllData(); }
+  if (action === 'trigger-import') { document.getElementById('importFileInput').click(); }
+  if (action === 'jump-to-result') {
+    const chapterId = el.dataset.chapter, tab = el.dataset.tab;
+    searchTerm = ''; const si = document.getElementById('searchInput'); if (si) si.value = '';
+    renderSearchDropdown(null);
+    mountChapter(chapterId, tab);
+  }
+
+  if (action === 'start-quiz') { startQuiz(); }
+  if (action === 'exit-quiz') { quiz.active = false; renderMainInto(); }
+  if (action === 'reveal-quiz-answer') { quiz.revealed = true; renderMainInto(); }
+  if (action === 'quiz-correct') { quizAnswer(true); }
+  if (action === 'quiz-wrong') { quizAnswer(false); }
+
+  if (action === 'toggle-preview') {
+    const box = document.getElementById('preview-' + el.dataset.id);
+    if (box) box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
+  }
+
+  if (action === 'select-tab') { activeTab = el.dataset.tab; refreshTabVisibility(); }
 
   if (action === 'open-resource-form') { openResourceForm(); }
   if (action === 'close-resource-form') { closeResourceForm(); }
@@ -430,25 +506,90 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-action="select-tab"]');
-  if (el) { activeTab = el.dataset.tab; refreshTabVisibility(); }
+  const tabEl = e.target.closest('[data-action="select-tab"]');
+  if (tabEl) { return; }
+  if (!e.target.closest('.search-wrap')) renderSearchDropdown(null);
 }, true);
 
 document.addEventListener('change', (e) => {
   if (e.target.id === 'resourceFileInput') { pendingFile.resource = e.target.files[0] || null; renderResourceFileRow(); }
   if (e.target.id === 'questionFileInput') { pendingFile.question = e.target.files[0] || null; renderQuestionFileRow(); }
+  if (e.target.id === 'importFileInput') {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const payload = JSON.parse(reader.result);
+        const count = (payload.chapters||[]).length;
+        if (!confirm(`This will add ${count} chapter(s) from the backup into your current binder (nothing existing gets deleted). File attachments will still point to their original storage location. Continue?`)) return;
+        await importData(payload);
+        await loadChapters();
+        renderChapterList();
+        alert('Import complete.');
+      } catch(err) {
+        alert('Could not read that file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+});
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'searchInput') {
+    searchTerm = e.target.value;
+    renderChapterList();
+    clearTimeout(searchDebounceTimer);
+    const term = searchTerm.trim();
+    if (term.length < 2) { renderSearchDropdown(null); return; }
+    searchDebounceTimer = setTimeout(() => runGlobalSearch(term), 300);
+  }
 });
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.id === 'newChapterInput') submitAddChapter();
-  if (e.key === 'Escape' && e.target.id === 'newChapterInput') { ui.addingChapter=false; renderSidebarInto(); }
+  if (e.key === 'Escape' && e.target.id === 'newChapterInput') { ui.addingChapter=false; renderAddArea(); }
   if (e.key === 'Enter' && e.target.id === 'renameInput') submitRename(ui.editingChapterId);
-  if (e.key === 'Escape' && e.target.id === 'renameInput') { ui.editingChapterId=null; renderSidebarInto(); }
+  if (e.key === 'Escape' && e.target.id === 'renameInput') { ui.editingChapterId=null; renderChapterList(); }
+  if (e.key === 'Escape' && e.target.id === 'searchInput') { e.target.value=''; searchTerm=''; renderChapterList(); renderSearchDropdown(null); }
+});
+
+/* ---- drag & drop chapter reorder ---- */
+document.addEventListener('dragstart', (e) => {
+  const item = e.target.closest('.chapter-item[data-drag-id]');
+  if (!item) return;
+  dragSourceId = item.dataset.dragId;
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', dragSourceId); } catch(err){}
+});
+document.addEventListener('dragover', (e) => {
+  const item = e.target.closest('.chapter-item[data-drag-id]');
+  if (!item || !dragSourceId) return;
+  e.preventDefault();
+  item.classList.add('drag-over');
+});
+document.addEventListener('dragleave', (e) => {
+  const item = e.target.closest('.chapter-item[data-drag-id]');
+  if (item) item.classList.remove('drag-over');
+});
+document.addEventListener('drop', (e) => {
+  const item = e.target.closest('.chapter-item[data-drag-id]');
+  if (!item || !dragSourceId) return;
+  e.preventDefault();
+  item.classList.remove('drag-over');
+  const targetId = item.dataset.dragId;
+  if (targetId !== dragSourceId) reorderChapters(dragSourceId, targetId);
+  dragSourceId = null;
+});
+document.addEventListener('dragend', () => {
+  document.querySelectorAll('.chapter-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+  dragSourceId = null;
 });
 
 function focusEl(id){ setTimeout(()=>{ const el = document.getElementById(id); if (el) el.focus(); }, 30); }
 
-/* ================= shell / sidebar / main skeleton ================= */
+/* ================= shell / sidebar / main ================= */
 function renderShell(){
   const app = document.getElementById('app');
   app.style.display = 'flex';
@@ -457,32 +598,63 @@ function renderShell(){
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main" id="main"></main>
   `;
-  renderSidebarInto();
+  renderSidebarShell();
   renderMainInto();
 }
 
-function renderSidebarInto(){
+function renderSidebarShell(){
   const el = document.getElementById('sidebar');
-  const overlay = document.getElementById('overlay');
   if (!el) return;
   el.className = 'sidebar' + (ui.sidebarOpen ? ' open' : '');
-  if (overlay) overlay.outerHTML = ui.sidebarOpen ? '<div class="overlay" id="overlay" data-action="close-sidebar"></div>' : '<div id="overlay"></div>';
+  el.innerHTML = `
+    <div class="brand">
+      <span class="serif brand-title">Study Binder</span>
+      <button class="close-btn" data-action="close-sidebar">&#10005;</button>
+    </div>
+    <div class="brand-sub">Organize every chapter in one place</div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Search everything&hellip;" autocomplete="off" />
+      <div id="searchDropdown"></div>
+    </div>
+    <button class="quiz-nav-btn" data-action="start-quiz">&#127919; Quiz me on everything</button>
+    <div class="chapter-list" id="chapterListContainer"></div>
+    <div class="add-chapter" id="addChapterArea"></div>
+  `;
+  renderChapterList();
+  renderAddArea();
+}
 
-  let chapterRows = '';
+function setSidebarOpenState(){
+  const el = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  if (el) el.className = 'sidebar' + (ui.sidebarOpen ? ' open' : '');
+  if (overlay) overlay.outerHTML = ui.sidebarOpen ? '<div class="overlay" id="overlay" data-action="close-sidebar"></div>' : '<div id="overlay"></div>';
+}
+
+function renderChapterList(){
+  const el = document.getElementById('chapterListContainer');
+  if (!el) return;
+  const term = searchTerm.trim().toLowerCase();
+  const visible = term ? chapters.filter(c => c.title.toLowerCase().includes(term)) : chapters;
+
+  let rows = '';
   if (chapters.length === 0) {
-    chapterRows = '<div style="font-size:13px;color:#7C8794;padding:10px 4px;">No chapters yet. Add your first one below.</div>';
+    rows = '<div style="font-size:13px;color:#7C8794;padding:10px 4px;">No chapters yet. Add your first one below.</div>';
+  } else if (visible.length === 0) {
+    rows = '<div style="font-size:13px;color:#7C8794;padding:10px 4px;">No chapters match your search.</div>';
   } else {
-    chapters.forEach((c, idx) => {
+    visible.forEach((c) => {
+      const idx = chapters.indexOf(c);
       if (ui.editingChapterId === c.id) {
-        chapterRows += `
+        rows += `
           <div class="rename-row">
             <input id="renameInput" type="text" value="${esc(c.title)}" />
             <button class="icon-btn" data-action="save-rename" data-id="${c.id}">&#10003;</button>
             <button class="icon-btn" data-action="cancel-rename">&#10005;</button>
           </div>`;
       } else {
-        chapterRows += `
-          <div class="chapter-item ${activeChapterId===c.id?'active':''}" data-action="select-chapter" data-id="${c.id}">
+        rows += `
+          <div class="chapter-item ${activeChapterId===c.id?'active':''}" draggable="true" data-drag-id="${c.id}" data-action="select-chapter" data-id="${c.id}">
             <span class="chapter-num">${String(idx+1).padStart(2,'0')}</span>
             <span class="chapter-title">${esc(c.title)}</span>
             <span class="chapter-actions">
@@ -492,7 +664,7 @@ function renderSidebarInto(){
           </div>`;
       }
       if (ui.confirmDeleteChapterId === c.id) {
-        chapterRows += `
+        rows += `
           <div class="inline-confirm">
             <p>Delete "${esc(c.title)}" and everything in it?</p>
             <div class="mini-row">
@@ -503,97 +675,156 @@ function renderSidebarInto(){
       }
     });
   }
+  el.innerHTML = rows;
+}
 
-  let addArea = '';
-  if (ui.addingChapter) {
-    addArea = `
-      <div class="add-form">
-        <input id="newChapterInput" type="text" placeholder="Chapter title" />
-        <div class="mini-row">
-          <button class="mini-btn ghost" data-action="cancel-add-chapter">Cancel</button>
-          <button class="mini-btn primary" data-action="submit-add-chapter">Add</button>
-        </div>
-      </div>`;
-  } else {
-    addArea = `<button class="add-btn" data-action="start-add-chapter">&#43; New chapter</button>`;
-  }
+function renderAddArea(){
+  const el = document.getElementById('addChapterArea');
+  if (!el) return;
 
-  let resetArea = '';
+  const addAreaHtml = ui.addingChapter ? `
+    <div class="add-form">
+      <input id="newChapterInput" type="text" placeholder="Chapter title" />
+      <div class="mini-row">
+        <button class="mini-btn ghost" data-action="cancel-add-chapter">Cancel</button>
+        <button class="mini-btn primary" data-action="submit-add-chapter">Add</button>
+      </div>
+    </div>` : `<button class="add-btn" data-action="start-add-chapter">&#43; New chapter</button>`;
+
+  let resetHtml = '';
   if (chapters.length > 0) {
-    if (ui.confirmResetAll) {
-      resetArea = `
-        <div class="inline-confirm">
-          <p>Erase all chapters and their content? This can't be undone.</p>
-          <div class="mini-row">
-            <button class="mini-btn ghost" data-action="cancel-reset-all">Cancel</button>
-            <button class="mini-btn danger" data-action="reset-all">Erase all</button>
-          </div>
-        </div>`;
-    } else {
-      resetArea = `<button class="sidebar-footer-link" data-action="confirm-reset-all">Clear all data</button>`;
-    }
+    resetHtml = ui.confirmResetAll ? `
+      <div class="inline-confirm">
+        <p>Erase all chapters and their content? This can't be undone.</p>
+        <div class="mini-row">
+          <button class="mini-btn ghost" data-action="cancel-reset-all">Cancel</button>
+          <button class="mini-btn danger" data-action="reset-all">Erase all</button>
+        </div>
+      </div>` : `<button class="sidebar-footer-link" data-action="confirm-reset-all">Clear all data</button>`;
   }
 
   el.innerHTML = `
-    <div class="brand">
-      <span class="serif brand-title">Study Binder</span>
-      <button class="close-btn" data-action="close-sidebar">&#10005;</button>
-    </div>
-    <div class="brand-sub">Organize every chapter in one place</div>
-    <div class="chapter-list">${chapterRows}</div>
-    <div class="add-chapter">
-      ${addArea}
-      ${resetArea}
-      <div class="conn-status"><span class="conn-dot"></span>Synced to your Supabase project</div>
-      <button class="sidebar-footer-link" data-action="disconnect">Disconnect this device</button>
-    </div>
+    ${addAreaHtml}
+    ${resetHtml}
+    <button class="sidebar-footer-link" data-action="export-data">&#11015; Backup my data</button>
+    <button class="sidebar-footer-link" data-action="trigger-import">&#11014; Restore from backup</button>
+    <input type="file" id="importFileInput" accept=".json" style="display:none" />
+    <div class="conn-status"><span class="conn-dot"></span>Synced to your Supabase project</div>
+    <button class="sidebar-footer-link" data-action="disconnect">Disconnect this device</button>
   `;
+  if (ui.addingChapter) focusEl('newChapterInput');
 }
 
+/* ---- search ---- */
+function chapterTitleOf(id){ const c = chapters.find(c=>c.id===id); return c ? c.title : ''; }
+
+async function runGlobalSearch(term){
+  const pattern = `%${term}%`;
+  const [r, q, n] = await Promise.all([
+    sbClient.from('resources').select('id,title,chapter_id').ilike('title', pattern).limit(6),
+    sbClient.from('questions').select('id,question,chapter_id').ilike('question', pattern).limit(6),
+    sbClient.from('notes').select('id,title,chapter_id').ilike('title', pattern).limit(6),
+  ]);
+  if (searchTerm.trim() !== term) return;
+  renderSearchDropdown({ resources: r.data||[], questions: q.data||[], notes: n.data||[] });
+}
+
+function renderSearchDropdown(results){
+  const el = document.getElementById('searchDropdown');
+  if (!el) return;
+  if (!results) { el.innerHTML = ''; el.classList.remove('open'); return; }
+  const groups = [];
+  if (results.resources.length) groups.push(['Resources', results.resources.map(r=>({label:r.title, chapterId:r.chapter_id, tab:'resources'}))]);
+  if (results.questions.length) groups.push(['Questions', results.questions.map(q=>({label:q.question, chapterId:q.chapter_id, tab:'questions'}))]);
+  if (results.notes.length) groups.push(['Notes', results.notes.map(n=>({label:n.title, chapterId:n.chapter_id, tab:'notes'}))]);
+  if (groups.length === 0) { el.innerHTML = '<div class="search-empty">No matches outside chapter titles</div>'; el.classList.add('open'); return; }
+  el.innerHTML = groups.map(([label, items]) => `
+    <div class="search-group-label">${label}</div>
+    ${items.map(it => `<div class="search-result-item" data-action="jump-to-result" data-chapter="${it.chapterId}" data-tab="${it.tab}">
+      <span>${esc(it.label)}</span><span class="search-result-chapter">${esc(chapterTitleOf(it.chapterId))}</span>
+    </div>`).join('')}
+  `).join('');
+  el.classList.add('open');
+}
+
+/* ---- drag reorder ---- */
+function reorderChapters(fromId, toId){
+  const fromIdx = chapters.findIndex(c=>c.id===fromId);
+  const toIdx = chapters.findIndex(c=>c.id===toId);
+  if (fromIdx===-1 || toIdx===-1) return;
+  const [moved] = chapters.splice(fromIdx, 1);
+  chapters.splice(toIdx, 0, moved);
+  renderChapterList();
+  persistChapterOrder();
+}
+async function persistChapterOrder(){
+  await Promise.all(chapters.map((c, idx) => sbClient.from('chapters').update({ position: idx }).eq('id', c.id)));
+}
+
+/* ---- main area ---- */
 function renderMainInto(){
   const el = document.getElementById('main');
   if (!el) return;
+
+  if (quiz.active) { renderQuizInto(el); return; }
+
   const chapter = chapters.find(c => c.id === activeChapterId);
+
+  if (!chapter) {
+    el.innerHTML = `
+      <div class="mobile-bar">
+        <button data-action="toggle-sidebar">&#9776;</button>
+        <span>Study Binder</span>
+      </div>
+      <div class="empty-state">
+        <h2 class="serif">Pick a chapter, or start one</h2>
+        <p>Each chapter holds its own resources, questions, and notes, so your material stays organized exactly the way your course is structured &mdash; and it's synced to every device you open this page from.</p>
+        <div class="dashboard-stats" id="dashboardStats"><div class="loading">Loading your overview&hellip;</div></div>
+        ${chapters.length===0
+          ? `<button class="btn primary" data-action="start-add-chapter">&#43; Create your first chapter</button>`
+          : `<button class="btn primary" data-action="start-quiz">&#127919; Quiz me on everything</button>`}
+      </div>
+    `;
+    loadDashboardStats().then(renderDashboardStats);
+    return;
+  }
 
   el.innerHTML = `
     <div class="mobile-bar">
       <button data-action="toggle-sidebar">&#9776;</button>
-      <span>${chapter ? esc(chapter.title) : 'Study Binder'}</span>
+      <span>${esc(chapter.title)}</span>
     </div>
-    ${!chapter ? `
-      <div class="empty-state">
-        <h2 class="serif">Pick a chapter, or start one</h2>
-        <p>Each chapter holds its own resources, questions, and notes, so your material stays organized exactly the way your course is structured &mdash; and it's synced to every device you open this page from.</p>
-        ${chapters.length===0 ? `<button class="btn primary" data-action="start-add-chapter">&#43; Create your first chapter</button>` : ''}
+    <div class="chapter-header">
+      <div>
+        <p class="chapter-eyebrow">Chapter ${String(chapters.findIndex(c=>c.id===chapter.id)+1).padStart(2,'0')}</p>
+        <h1 class="serif">${esc(chapter.title)}</h1>
       </div>
-    ` : `
-      <div class="chapter-header">
-        <div>
-          <p class="chapter-eyebrow">Chapter ${String(chapters.findIndex(c=>c.id===chapter.id)+1).padStart(2,'0')}</p>
-          <h1 class="serif">${esc(chapter.title)}</h1>
-        </div>
-      </div>
-      <div class="tabs">
-        <button class="tab ${activeTab==='resources'?'active':''}" data-action="select-tab" data-tab="resources">Resources</button>
-        <button class="tab ${activeTab==='questions'?'active':''}" data-action="select-tab" data-tab="questions">Questions</button>
-        <button class="tab ${activeTab==='notes'?'active':''}" data-action="select-tab" data-tab="notes">Notes</button>
-      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab ${activeTab==='resources'?'active':''}" data-action="select-tab" data-tab="resources">Resources</button>
+      <button class="tab ${activeTab==='questions'?'active':''}" data-action="select-tab" data-tab="questions">Questions</button>
+      <button class="tab ${activeTab==='notes'?'active':''}" data-action="select-tab" data-tab="notes">Notes</button>
+    </div>
 
-      <div class="panel ${activeTab==='resources'?'active':''}" id="panel-resources">
-        <div id="resourceFormArea"><button class="btn primary" data-action="open-resource-form">&#43; Add resource</button></div>
-        <div id="resourceList"><div class="loading">Loading&hellip;</div></div>
-      </div>
-      <div class="panel ${activeTab==='questions'?'active':''}" id="panel-questions">
-        <div id="questionFormArea"><button class="btn primary" data-action="open-question-form">&#43; Add question</button></div>
-        <div id="questionList"><div class="loading">Loading&hellip;</div></div>
-      </div>
-      <div class="panel ${activeTab==='notes'?'active':''}" id="panel-notes">
-        <div id="noteFormArea"><button class="btn primary" data-action="open-note-form">&#43; Add note</button></div>
-        <div id="noteList"><div class="loading">Loading&hellip;</div></div>
-      </div>
-    `}
+    <div class="panel ${activeTab==='resources'?'active':''}" id="panel-resources">
+      <div id="resourceFormArea"><button class="btn primary" data-action="open-resource-form">&#43; Add resource</button></div>
+      <div id="resourceList"><div class="loading">Loading&hellip;</div></div>
+    </div>
+    <div class="panel ${activeTab==='questions'?'active':''}" id="panel-questions">
+      <div id="questionFormArea"><button class="btn primary" data-action="open-question-form">&#43; Add question</button></div>
+      <div id="questionList"><div class="loading">Loading&hellip;</div></div>
+    </div>
+    <div class="panel ${activeTab==='notes'?'active':''}" id="panel-notes">
+      <div id="noteFormArea"><button class="btn primary" data-action="open-note-form">&#43; Add note</button></div>
+      <div id="noteList"><div class="loading">Loading&hellip;</div></div>
+    </div>
   `;
 }
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action="select-tab"]');
+  if (el) { activeTab = el.dataset.tab; refreshTabVisibility(); }
+}, true);
 
 function refreshTabVisibility(){
   ['resources','questions','notes'].forEach(k => {
@@ -604,28 +835,124 @@ function refreshTabVisibility(){
   });
 }
 
-/* ================= chapters CRUD ================= */
+/* ---- dashboard ---- */
+async function loadDashboardStats(){
+  const [res, qs, nt, mastered] = await Promise.all([
+    sbClient.from('resources').select('id', { count: 'exact', head: true }),
+    sbClient.from('questions').select('id', { count: 'exact', head: true }),
+    sbClient.from('notes').select('id', { count: 'exact', head: true }),
+    sbClient.from('questions').select('id', { count: 'exact', head: true }).eq('mastered', true),
+  ]);
+  return {
+    chapters: chapters.length,
+    resources: res.count || 0,
+    questions: qs.count || 0,
+    notes: nt.count || 0,
+    mastered: mastered.count || 0,
+  };
+}
+function renderDashboardStats(stats){
+  const el = document.getElementById('dashboardStats');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="stat-tile"><strong>${stats.chapters}</strong><span>Chapters</span></div>
+    <div class="stat-tile"><strong>${stats.resources}</strong><span>Resources</span></div>
+    <div class="stat-tile"><strong>${stats.questions}</strong><span>Questions</span></div>
+    <div class="stat-tile"><strong>${stats.notes}</strong><span>Notes</span></div>
+    <div class="stat-tile accent"><strong>${stats.mastered}/${stats.questions}</strong><span>Mastered</span></div>
+  `;
+}
+
+/* ---- quiz mode ---- */
+async function startQuiz(){
+  ui.sidebarOpen = false; setSidebarOpenState();
+  const { data, error } = await sbClient.from('questions').select('*, chapters(title)').order('created_at');
+  if (error) { alert('Could not load questions: ' + error.message); return; }
+  quiz.queue = shuffleArray((data||[]).slice());
+  quiz.index = 0; quiz.correct = 0; quiz.wrong = 0; quiz.revealed = false; quiz.active = true;
+  activeChapterId = null;
+  renderMainInto();
+  renderChapterList();
+}
+function quizAnswer(correct){
+  const q = quiz.queue[quiz.index];
+  if (correct) { quiz.correct++; sbClient.from('questions').update({ mastered: true }).eq('id', q.id); }
+  else { quiz.wrong++; }
+  quiz.index++; quiz.revealed = false;
+  renderMainInto();
+}
+function renderQuizInto(el){
+  if (quiz.queue.length === 0) {
+    el.innerHTML = `
+      <div class="mobile-bar"><button data-action="toggle-sidebar">&#9776;</button><span>Quiz</span></div>
+      <div class="empty-state">
+        <h2 class="serif">No questions yet</h2>
+        <p>Add some questions to your chapters first, then come back to quiz yourself across all of them at once.</p>
+        <button class="btn primary" data-action="exit-quiz">Back to chapters</button>
+      </div>`;
+    return;
+  }
+  if (quiz.index >= quiz.queue.length) {
+    el.innerHTML = `
+      <div class="mobile-bar"><button data-action="toggle-sidebar">&#9776;</button><span>Quiz</span></div>
+      <div class="empty-state">
+        <h2 class="serif">Quiz complete</h2>
+        <p>You got ${quiz.correct} of ${quiz.queue.length} right${quiz.wrong>0 ? `, ${quiz.wrong} to review again` : ''}.</p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn primary" data-action="start-quiz">Quiz again</button>
+          <button class="btn text" data-action="exit-quiz">Back to chapters</button>
+        </div>
+      </div>`;
+    return;
+  }
+  const q = quiz.queue[quiz.index];
+  const chapterTitle = q.chapters && q.chapters.title ? q.chapters.title : '';
+  el.innerHTML = `
+    <div class="mobile-bar"><button data-action="toggle-sidebar">&#9776;</button><span>Quiz</span></div>
+    <div class="quiz-wrap">
+      <div class="quiz-top">
+        <span class="chapter-eyebrow">Question ${quiz.index+1} of ${quiz.queue.length}${chapterTitle ? ' &middot; ' + esc(chapterTitle) : ''}</span>
+        <button class="btn text" data-action="exit-quiz">Exit quiz</button>
+      </div>
+      <div class="quiz-card">
+        <p class="quiz-question">${esc(q.question)}</p>
+        ${quiz.revealed
+          ? `<div class="answer-box">${q.answer ? esc(q.answer) : 'No answer was saved for this one.'}</div>`
+          : `<button class="answer-toggle" data-action="reveal-quiz-answer">Reveal answer</button>`}
+      </div>
+      ${quiz.revealed ? `
+        <div class="quiz-actions">
+          <button class="btn primary" data-action="quiz-correct">&#10003; Got it</button>
+          <button class="btn text" data-action="quiz-wrong">Still learning this</button>
+        </div>` : ''}
+    </div>`;
+}
+
+/* ---- chapters CRUD ---- */
 async function submitAddChapter(){
   const input = document.getElementById('newChapterInput');
   const title = input ? input.value.trim() : '';
   if (!title) return;
-  const { data, error } = await sbClient.from('chapters').insert({ title }).select().single();
+  const maxPos = chapters.reduce((m,c) => Math.max(m, (c.position ?? 0)), 0);
+  let { data, error } = await sbClient.from('chapters').insert({ title, position: maxPos + 1 }).select().single();
+  if (error && /position/i.test(error.message)) {
+    ({ data, error } = await sbClient.from('chapters').insert({ title }).select().single());
+  }
   if (error) { alert('Could not add chapter: ' + error.message); return; }
   ui.addingChapter = false;
   await loadChapters();
+  renderAddArea();
   mountChapter(data.id);
 }
-
 async function submitRename(id){
   const input = document.getElementById('renameInput');
   const title = input ? input.value.trim() : '';
   ui.editingChapterId = null;
-  if (!title) { renderSidebarInto(); return; }
+  if (!title) { renderChapterList(); return; }
   await sbClient.from('chapters').update({ title }).eq('id', id);
   await loadChapters();
-  renderSidebarInto();
+  renderChapterList();
 }
-
 async function deleteChapter(id){
   ui.confirmDeleteChapterId = null;
   const [r, q] = await Promise.all([
@@ -637,20 +964,62 @@ async function deleteChapter(id){
   await sbClient.from('chapters').delete().eq('id', id);
   if (activeChapterId === id) activeChapterId = null;
   await loadChapters();
-  renderSidebarInto();
+  renderChapterList();
   renderMainInto();
 }
-
 async function resetAll(){
   ui.confirmResetAll = false;
   const ids = chapters.map(c => c.id);
   for (const id of ids) await deleteChapter(id);
   await loadChapters();
-  renderSidebarInto();
+  renderChapterList();
+  renderAddArea();
   renderMainInto();
 }
 
-/* ================= generic item delete ================= */
+/* ---- backup / restore ---- */
+async function exportAllData(){
+  const [ch, res, qs, nt] = await Promise.all([
+    sbClient.from('chapters').select('*'),
+    sbClient.from('resources').select('*'),
+    sbClient.from('questions').select('*'),
+    sbClient.from('notes').select('*'),
+  ]);
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    chapters: ch.data || [], resources: res.data || [], questions: qs.data || [], notes: nt.data || [],
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `study-binder-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+async function importData(payload){
+  const idMap = {};
+  for (const c of (payload.chapters||[])) {
+    const { data } = await sbClient.from('chapters').insert({ title: c.title }).select().single();
+    if (data) idMap[c.id] = data.id;
+  }
+  for (const r of (payload.resources||[])) {
+    if (!idMap[r.chapter_id]) continue;
+    await sbClient.from('resources').insert({ chapter_id: idMap[r.chapter_id], title: r.title, url: r.url, description: r.description, file_url: r.file_url, file_name: r.file_name, file_path: r.file_path, file_size: r.file_size });
+  }
+  for (const q of (payload.questions||[])) {
+    if (!idMap[q.chapter_id]) continue;
+    await sbClient.from('questions').insert({ chapter_id: idMap[q.chapter_id], question: q.question, answer: q.answer, mastered: q.mastered, file_url: q.file_url, file_name: q.file_name, file_path: q.file_path, file_size: q.file_size });
+  }
+  for (const n of (payload.notes||[])) {
+    if (!idMap[n.chapter_id]) continue;
+    await sbClient.from('notes').insert({ chapter_id: idMap[n.chapter_id], title: n.title, content: n.content });
+  }
+}
+
+/* ---- generic item delete ---- */
 async function deleteItem(kind, id, cache){
   const item = cache.find(i => i.id === id);
   if (item && item.file_path) { await sbClient.storage.from(BUCKET).remove([item.file_path]); }
@@ -658,18 +1027,31 @@ async function deleteItem(kind, id, cache){
   await loadChapterItems(activeChapterId);
   renderList(kind);
 }
-
 async function uploadFile(path, file){
   const { error } = await sbClient.storage.from(BUCKET).upload(path, file, { upsert: true });
   if (error) throw error;
   const { data } = sbClient.storage.from(BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
-
 function renderList(kind){
   if (kind === 'resources') return renderResourceList();
   if (kind === 'questions') return renderQuestionList();
   if (kind === 'notes') return renderNoteList();
+}
+function fileViewHtml(it){
+  if (!it.file_url) return '';
+  const ext = fileExt(it.file_name);
+  const previewable = isImageExt(ext) || isPdfExt(ext);
+  let html = `<div class="file-row-view">
+    <a href="${esc(it.file_url)}" target="_blank" rel="noreferrer" class="file-chip">&#128206; ${esc(it.file_name||'file')} <span class="fsize">${formatBytes(it.file_size)}</span></a>`;
+  if (previewable) {
+    html += `<button class="preview-toggle" data-action="toggle-preview" data-id="${it.id}">Preview</button>
+    <div class="preview-box" id="preview-${it.id}" style="display:none;">
+      ${isImageExt(ext) ? `<img src="${esc(it.file_url)}" alt="${esc(it.file_name)}" />` : `<iframe src="${esc(it.file_url)}"></iframe>`}
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
 }
 
 /* ================= resources ================= */
@@ -778,7 +1160,7 @@ function renderResourceList(){
           <p class="item-title">${esc(it.title)}</p>
           ${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noreferrer" class="item-link">${esc(it.url)}</a>` : ''}
           ${it.description ? `<p class="item-desc">${esc(it.description)}</p>` : ''}
-          ${it.file_url ? `<a href="${esc(it.file_url)}" target="_blank" rel="noreferrer" class="file-chip">&#128206; ${esc(it.file_name||'file')} <span class="fsize">${formatBytes(it.file_size)}</span></a>` : ''}
+          ${fileViewHtml(it)}
         </div>
         <div class="item-actions">
           <button class="icon-btn dim" data-action="edit-resource" data-id="${it.id}">&#9998;</button>
@@ -852,6 +1234,7 @@ async function submitQuestionForm(){
 
   try {
     const id = editingItem ? editingItem.id : newId();
+    if (editingItem) data.mastered = editingItem.mastered || false;
     if (editingItem && removeFile && editingItem.file_path) {
       await sbClient.storage.from(BUCKET).remove([editingItem.file_path]);
       data.file_url = null; data.file_name = null; data.file_path = null; data.file_size = null;
@@ -899,7 +1282,7 @@ function renderQuestionList(){
             <button class="answer-toggle" data-action="toggle-answer" data-id="${it.id}">${revealed[it.id]?'Hide answer':'Reveal answer'}</button>
             ${revealed[it.id] ? `<div class="answer-box">${esc(it.answer)}</div>` : ''}
           ` : ''}
-          ${it.file_url ? `<div><a href="${esc(it.file_url)}" target="_blank" rel="noreferrer" class="file-chip">&#128206; ${esc(it.file_name||'file')} <span class="fsize">${formatBytes(it.file_size)}</span></a></div>` : ''}
+          ${fileViewHtml(it)}
           <div class="mastered-row">
             <input type="checkbox" ${it.mastered?'checked':''} data-action="toggle-mastered" data-id="${it.id}" />
             Comfortable with this one
