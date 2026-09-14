@@ -4,10 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Study Binder</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
+    ></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap"
+      media="print"
+      onload="this.media = 'all'"
+    />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap");
-
       :root {
         --ink: #1b2430;
         --paper: #f5f6f1;
@@ -60,6 +69,46 @@
         color: var(--text-dim);
         font-size: 15px;
         line-height: 1.55;
+      }
+      .setup-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px 22px;
+        margin-bottom: 16px;
+      }
+      .setup-card h2 {
+        font-size: 16px;
+        margin: 0 0 10px 0;
+      }
+      .setup-error {
+        background: #fbeae8;
+        border: 1px solid #e9bab3;
+        color: var(--danger);
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        margin-bottom: 14px;
+      }
+      .setup-wrap input[type="text"],
+      .setup-wrap input[type="email"],
+      .setup-wrap input[type="password"] {
+        width: 100%;
+        font-size: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: #fcfcfa;
+        margin-bottom: 0;
+      }
+      .setup-wrap input[type="text"]:focus,
+      .setup-wrap input[type="email"]:focus,
+      .setup-wrap input[type="password"]:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .setup-card input + input {
+        margin-top: 10px;
       }
 
       .btn {
@@ -921,7 +970,22 @@
     </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div
+        style="
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f5f6f1;
+          font-family: -apple-system, sans-serif;
+          color: #6b7280;
+          font-size: 14px;
+        "
+      >
+        Loading Study Binder&hellip;
+      </div>
+    </div>
 
     <!--
   ONE-TIME SETUP FOR YOU (the site owner):
@@ -1056,27 +1120,18 @@
         const {
           data: { session },
         } = await sbClient.auth.getSession();
-        if (!session) {
-          const { error } = await sbClient.auth.signInAnonymously();
-          if (error) {
-            showFatalError("Could not connect: " + error.message);
-            return;
-          }
-        }
-
-        await refreshUserState();
-        await ensureDeviceRow();
-
-        if (!isAdmin) {
-          const revoked = await checkRevoked();
-          if (revoked) {
+        if (session && session.user) {
+          currentUser = session.user;
+          isAdmin = !!(currentUser && currentUser.is_anonymous === false);
+          const [device] = await Promise.all([checkInDevice(), loadChapters()]);
+          if (!isAdmin && device && device.revoked) {
             renderRevokedScreen();
             return;
           }
+          renderShell();
+        } else {
+          renderLandingGate();
         }
-
-        await loadChapters();
-        renderShell();
       }
 
       function showFatalError(msg) {
@@ -1095,34 +1150,115 @@
     </div>`;
       }
 
-      async function refreshUserState() {
-        const {
-          data: { user },
-        } = await sbClient.auth.getUser();
-        currentUser = user || null;
-        isAdmin = !!(currentUser && currentUser.is_anonymous === false);
+      /* landing gate: shown whenever there is no existing session on this browser */
+      function renderLandingGate(error) {
+        const app = document.getElementById("app");
+        app.style.display = "block";
+        app.innerHTML = `
+    <div class="setup-wrap" style="max-width:460px;">
+      <h1 class="serif">Welcome to Study Binder</h1>
+      <p class="lead">Enter your name to browse, or sign in below if you're the admin.</p>
+      ${error ? `<div class="setup-error">${esc(error)}</div>` : ""}
+      <div class="setup-card">
+        <h2>Continue as visitor</h2>
+        <input type="text" id="visitorName" placeholder="Your name" />
+        <div class="form-actions"><button class="btn primary" data-action="visitor-continue">Continue</button></div>
+      </div>
+      <div class="setup-card">
+        <h2>Admin sign in</h2>
+        <input type="email" id="gateAdminEmail" placeholder="Email" />
+        <input type="password" id="gateAdminPassword" placeholder="Password" />
+        <div class="form-actions">
+          <button class="btn primary" data-action="gate-admin-login">Sign in</button>
+          <button class="btn text" data-action="gate-admin-forgot">Forgot password?</button>
+        </div>
+      </div>
+    </div>`;
+        focusEl("visitorName");
+      }
+      async function visitorContinue() {
+        const nameInput = document.getElementById("visitorName");
+        const name = nameInput.value.trim();
+        if (!name) {
+          nameInput.focus();
+          return;
+        }
+        const { data, error } = await sbClient.auth.signInAnonymously();
+        if (error) {
+          renderLandingGate(error.message);
+          return;
+        }
+        currentUser = data.user;
+        isAdmin = false;
+        const [device] = await Promise.all([
+          registerDevice(name),
+          loadChapters(),
+        ]);
+        if (device && device.revoked) {
+          renderRevokedScreen();
+          return;
+        }
+        renderShell();
+      }
+      async function gateAdminLogin() {
+        const email = document.getElementById("gateAdminEmail").value.trim();
+        const password = document.getElementById("gateAdminPassword").value;
+        if (!email || !password) return;
+        const { data, error } = await sbClient.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          renderLandingGate(error.message);
+          return;
+        }
+        currentUser = data.user;
+        isAdmin = true;
+        await Promise.all([registerDevice(guessDeviceLabel()), loadChapters()]);
+        renderShell();
+      }
+      async function gateAdminForgot() {
+        const email = document.getElementById("gateAdminEmail").value.trim();
+        if (!email) {
+          renderLandingGate(
+            'Enter your email above first, then click "Forgot password?" again.',
+          );
+          return;
+        }
+        const { error } = await sbClient.auth.resetPasswordForEmail(email);
+        if (error) {
+          renderLandingGate(error.message);
+          return;
+        }
+        alert("Check your email for a password reset link.");
       }
 
-      async function ensureDeviceRow() {
-        if (!currentUser) return;
-        await sbClient.from("devices").upsert(
-          {
-            user_id: currentUser.id,
-            device_name: guessDeviceLabel(),
-            is_admin: isAdmin,
-            last_seen: new Date().toISOString(),
-          },
-          { onConflict: "user_id" },
-        );
-      }
-
-      async function checkRevoked() {
+      /* device tracking: registerDevice sets a fresh label (first sign-in), checkInDevice just bumps last_seen */
+      async function registerDevice(name) {
         const { data } = await sbClient
           .from("devices")
-          .select("revoked")
+          .upsert(
+            {
+              user_id: currentUser.id,
+              device_name: name,
+              is_admin: isAdmin,
+              last_seen: new Date().toISOString(),
+            },
+            { onConflict: "user_id" },
+          )
+          .select()
+          .single();
+        return data;
+      }
+      async function checkInDevice() {
+        const { data } = await sbClient
+          .from("devices")
+          .update({ last_seen: new Date().toISOString() })
           .eq("user_id", currentUser.id)
+          .select()
           .maybeSingle();
-        return !!(data && data.revoked);
+        if (data) return data;
+        return registerDevice(guessDeviceLabel());
       }
 
       /* ================= data loading ================= */
@@ -1216,7 +1352,7 @@
         const email = document.getElementById("adminEmail").value.trim();
         const password = document.getElementById("adminPassword").value;
         if (!email || !password) return;
-        const { error } = await sbClient.auth.signInWithPassword({
+        const { data, error } = await sbClient.auth.signInWithPassword({
           email,
           password,
         });
@@ -1225,11 +1361,11 @@
           renderModal();
           return;
         }
-        await refreshUserState();
-        await ensureDeviceRow();
+        currentUser = data.user;
+        isAdmin = true;
         ui.showAdminLogin = false;
         renderModal();
-        await loadChapters();
+        await Promise.all([registerDevice(guessDeviceLabel()), loadChapters()]);
         renderShell();
       }
       async function adminForgotPassword() {
@@ -1251,18 +1387,10 @@
       }
       async function adminSignOut() {
         await sbClient.auth.signOut();
-        const { error } = await sbClient.auth.signInAnonymously();
-        if (error) {
-          showFatalError(
-            "Could not restore anonymous session: " + error.message,
-          );
-          return;
-        }
-        await refreshUserState();
-        await ensureDeviceRow();
+        currentUser = null;
+        isAdmin = false;
         currentView = "chapter";
-        await loadChapters();
-        renderShell();
+        renderLandingGate();
       }
 
       /* ================= devices view (admin only) ================= */
@@ -1286,6 +1414,19 @@
           .from("devices")
           .update({ revoked: !d.revoked })
           .eq("user_id", userId);
+        await refreshDevicesList();
+      }
+      async function deleteDevicePermanently(userId) {
+        if (
+          !confirm(
+            "Delete this device from the list permanently? Note: if it is currently revoked, deleting also lifts that block — if it reconnects it will show up again and you would need to revoke it again. This cannot be undone.",
+          )
+        )
+          return;
+        await sbClient.from("devices").delete().eq("user_id", userId);
+        await refreshDevicesList();
+      }
+      async function refreshDevicesList() {
         const { data } = await sbClient
           .from("devices")
           .select("*")
@@ -1316,9 +1457,12 @@
       ${
         d.user_id !== currentUser.id
           ? `
-        <button class="btn ${d.revoked ? "primary" : "text"}" data-action="toggle-device-revoke" data-id="${d.user_id}">
-          ${d.revoked ? "Restore access" : "Revoke access"}
-        </button>`
+        <div style="display:flex;gap:6px;">
+          <button class="btn ${d.revoked ? "primary" : "text"}" data-action="toggle-device-revoke" data-id="${d.user_id}">
+            ${d.revoked ? "Restore access" : "Revoke access"}
+          </button>
+          <button class="btn text" style="color:var(--danger);" data-action="delete-device" data-id="${d.user_id}">Delete</button>
+        </div>`
           : ""
       }
     </div>`,
@@ -1365,6 +1509,18 @@
         }
         if (action === "toggle-device-revoke") {
           toggleDeviceRevoke(el.dataset.id);
+        }
+        if (action === "delete-device") {
+          deleteDevicePermanently(el.dataset.id);
+        }
+        if (action === "visitor-continue") {
+          visitorContinue();
+        }
+        if (action === "gate-admin-login") {
+          gateAdminLogin();
+        }
+        if (action === "gate-admin-forgot") {
+          gateAdminForgot();
         }
 
         if (!isAdmin) {
@@ -1640,6 +1796,14 @@
           (e.target.id === "adminEmail" || e.target.id === "adminPassword")
         )
           adminLogin();
+        if (e.key === "Enter" && e.target.id === "visitorName")
+          visitorContinue();
+        if (
+          e.key === "Enter" &&
+          (e.target.id === "gateAdminEmail" ||
+            e.target.id === "gateAdminPassword")
+        )
+          gateAdminLogin();
       });
 
       /* drag & drop chapter reorder (admin only) */
@@ -1964,11 +2128,9 @@
       <div class="empty-state">
         <h2 class="serif">Pick a chapter${isAdmin ? ", or start one" : ""}</h2>
         <p>Each chapter holds its own resources, questions, and notes, so material stays organized exactly the way the course is structured.</p>
-        <div class="dashboard-stats" id="dashboardStats"><div class="loading">Loading overview&hellip;</div></div>
         ${isAdmin && chapters.length === 0 ? `<button class="btn primary" data-action="start-add-chapter">&#43; Create your first chapter</button>` : ""}
       </div>
     `;
-          loadDashboardStats().then(renderDashboardStats);
           return;
         }
 
@@ -2019,41 +2181,6 @@
           const t = document.querySelector('.tab[data-tab="' + k + '"]');
           if (t) t.className = "tab" + (activeTab === k ? " active" : "");
         });
-      }
-
-      /* ---- dashboard ---- */
-      async function loadDashboardStats() {
-        const [res, qs, nt, mastered] = await Promise.all([
-          sbClient
-            .from("resources")
-            .select("id", { count: "exact", head: true }),
-          sbClient
-            .from("questions")
-            .select("id", { count: "exact", head: true }),
-          sbClient.from("notes").select("id", { count: "exact", head: true }),
-          sbClient
-            .from("questions")
-            .select("id", { count: "exact", head: true })
-            .eq("mastered", true),
-        ]);
-        return {
-          chapters: chapters.length,
-          resources: res.count || 0,
-          questions: qs.count || 0,
-          notes: nt.count || 0,
-          mastered: mastered.count || 0,
-        };
-      }
-      function renderDashboardStats(stats) {
-        const el = document.getElementById("dashboardStats");
-        if (!el) return;
-        el.innerHTML = `
-    <div class="stat-tile"><strong>${stats.chapters}</strong><span>Chapters</span></div>
-    <div class="stat-tile"><strong>${stats.resources}</strong><span>Resources</span></div>
-    <div class="stat-tile"><strong>${stats.questions}</strong><span>Questions</span></div>
-    <div class="stat-tile"><strong>${stats.notes}</strong><span>Notes</span></div>
-    <div class="stat-tile accent"><strong>${stats.mastered}/${stats.questions}</strong><span>Mastered</span></div>
-  `;
       }
 
       /* ---- chapters CRUD (admin only, guarded above) ---- */
