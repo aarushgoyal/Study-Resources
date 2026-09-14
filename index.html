@@ -215,6 +215,7 @@
   const SUPABASE_URL = 'https://euaopedkdcwzfurftqgw.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1YW9wZWRrZGN3emZ1cmZ0cWd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyODY3NTYsImV4cCI6MjEwNDg2Mjc1Nn0.PmUbSXNtdYl8SSh7xl8rz0D7UMTncrDHWORVmYgnv_Y';
 </script>
+
 <script>
 /* ================= helpers ================= */
 function esc(s){ if (s===undefined||s===null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -289,10 +290,16 @@ async function boot(){
   }
 
   sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+
+  let recoveryMode = false;
+  sbClient.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') { recoveryMode = true; renderSetNewPasswordScreen(); }
   });
 
   const { data: { session } } = await sbClient.auth.getSession();
+  if (recoveryMode) return;
   if (session && session.user) {
     currentUser = session.user;
     isAdmin = !!(currentUser && currentUser.is_anonymous === false);
@@ -318,6 +325,31 @@ function renderRevokedScreen(){
       <h1 class="serif">This device's access was removed</h1>
       <p class="lead">The site owner revoked access for this browser. If you think that's a mistake, contact them directly.</p>
     </div>`;
+}
+
+function renderSetNewPasswordScreen(error){
+  const app = document.getElementById('app');
+  app.style.display = 'block';
+  app.innerHTML = `
+    <div class="setup-wrap" style="max-width:420px;">
+      <h1 class="serif">Set a new password</h1>
+      <p class="lead">Choose a new password for your admin account.</p>
+      ${error ? `<div class="setup-error">${esc(error)}</div>` : ''}
+      <div class="setup-card">
+        <input type="password" id="newPassword" placeholder="New password (min 6 characters)" />
+        <div class="form-actions"><button class="btn primary" data-action="set-new-password">Save password</button></div>
+      </div>
+    </div>`;
+  focusEl('newPassword');
+}
+async function setNewPassword(){
+  const pw = document.getElementById('newPassword').value;
+  if (!pw || pw.length < 6) { renderSetNewPasswordScreen('Password should be at least 6 characters.'); return; }
+  const { data, error } = await sbClient.auth.updateUser({ password: pw });
+  if (error) { renderSetNewPasswordScreen(error.message); return; }
+  currentUser = data.user; isAdmin = true;
+  await Promise.all([ registerDevice(guessDeviceLabel()), loadChapters() ]);
+  renderShell();
 }
 
 /* landing gate: shown whenever there is no existing session on this browser */
@@ -370,7 +402,7 @@ async function gateAdminLogin(){
 async function gateAdminForgot(){
   const email = document.getElementById('gateAdminEmail').value.trim();
   if (!email) { renderLandingGate('Enter your email above first, then click "Forgot password?" again.'); return; }
-  const { error } = await sbClient.auth.resetPasswordForEmail(email);
+  const { error } = await sbClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
   if (error) { renderLandingGate(error.message); return; }
   alert('Check your email for a password reset link.');
 }
@@ -422,7 +454,7 @@ function renderModal(){
   if (!ui.showAdminLogin) { host.innerHTML = ''; return; }
   host.innerHTML = `
     <div class="modal-overlay" data-action="close-admin-login-bg">
-      <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-card" data-action="noop">
         <h2 class="serif">Admin sign in</h2>
         <p class="hint">Sign in with the email &amp; password you set up in Supabase to unlock editing on this device.</p>
         ${ui.adminLoginError ? `<div class="modal-error">${esc(ui.adminLoginError)}</div>` : ''}
@@ -431,9 +463,10 @@ function renderModal(){
           <div class="field"><label>Password</label><input type="password" id="adminPassword" /></div>
         </div>
         <div class="form-actions">
-          <button class="btn primary" type="button" onclick="adminLogin()">Sign in</button>
-<button class="btn text" type="button" onclick="closeAdminLogin()">Cancel</button>
-<button class="btn text" type="button" onclick="adminForgotPassword()" style="margin-top:6px;padding-left:0;">Forgot password?</button>
+          <button class="btn primary" data-action="admin-login">Sign in</button>
+          <button class="btn text" data-action="close-admin-login">Cancel</button>
+        </div>
+        <button class="btn text" data-action="admin-forgot" style="margin-top:6px;padding-left:0;">Forgot password?</button>
       </div>
     </div>`;
   focusEl('adminEmail');
@@ -453,7 +486,7 @@ async function adminLogin(){
 async function adminForgotPassword(){
   const email = document.getElementById('adminEmail').value.trim();
   if (!email) { ui.adminLoginError = 'Enter your email above first, then click "Forgot password?" again.'; renderModal(); return; }
-  const { error } = await sbClient.auth.resetPasswordForEmail(email);
+  const { error } = await sbClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
   if (error) { ui.adminLoginError = error.message; renderModal(); return; }
   ui.adminLoginError = null;
   alert('Check your email for a password reset link.');
@@ -534,6 +567,7 @@ document.addEventListener('click', (e) => {
   if (action === 'visitor-continue') { visitorContinue(); }
   if (action === 'gate-admin-login') { gateAdminLogin(); }
   if (action === 'gate-admin-forgot') { gateAdminForgot(); }
+  if (action === 'set-new-password') { setNewPassword(); }
 
   if (!isAdmin) {
     const guardedActions = ['start-add-chapter','submit-add-chapter','start-rename','save-rename',
@@ -654,6 +688,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && (e.target.id === 'adminEmail' || e.target.id === 'adminPassword')) adminLogin();
   if (e.key === 'Enter' && e.target.id === 'visitorName') visitorContinue();
   if (e.key === 'Enter' && (e.target.id === 'gateAdminEmail' || e.target.id === 'gateAdminPassword')) gateAdminLogin();
+  if (e.key === 'Enter' && e.target.id === 'newPassword') setNewPassword();
 });
 
 /* drag & drop chapter reorder (admin only) */
