@@ -25,9 +25,10 @@
     margin: 0; padding: 0; min-height: 100vh;
     font-family: 'Public Sans', -apple-system, sans-serif;
     color: var(--text); background: var(--paper);
+    overflow-x: hidden; width: 100%; max-width: 100%;
   }
   .serif { font-family: 'Fraunces', Georgia, serif; }
-  #app { display: flex; min-height: 100vh; width: 100%; }
+  #app { display: flex; min-height: 100vh; width: 100%; max-width: 100%; }
 
   /* ---------- setup screen ---------- */
   .setup-wrap { max-width: 680px; margin: 0 auto; padding: 56px 24px; }
@@ -92,13 +93,6 @@
   .search-result-chapter { color: var(--text-dim); font-size: 12px; flex-shrink: 0; }
   .search-empty { padding: 10px 12px; font-size: 13px; color: var(--text-dim); }
 
-  .quiz-nav-btn {
-    width: 100%; background: rgba(192,138,46,0.15); border: 1px solid rgba(192,138,46,0.35);
-    color: #F0D9A8; padding: 9px 10px; border-radius: 8px; font-size: 13.5px; cursor: pointer;
-    margin-bottom: 14px; text-align: left; font-family: inherit;
-  }
-  .quiz-nav-btn:hover { background: rgba(192,138,46,0.25); }
-
   .chapter-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
   .chapter-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; border-left: 3px solid transparent; cursor: pointer; }
   .chapter-item[draggable="true"] { cursor: grab; }
@@ -141,12 +135,6 @@
   .empty-state h2 { font-size: 26px; margin: 14px 0 8px 0; }
   .empty-state p { color: var(--text-dim); font-size: 15px; line-height: 1.55; margin: 0 0 18px 0; }
 
-  .dashboard-stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 22px 0; }
-  .stat-tile { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; min-width: 92px; }
-  .stat-tile strong { display: block; font-size: 21px; font-family: 'Fraunces', serif; }
-  .stat-tile span { font-size: 12px; color: var(--text-dim); }
-  .stat-tile.accent { border-color: var(--accent); background: var(--accent-soft); }
-
   .chapter-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
   .chapter-header h1 { font-size: 30px; font-weight: 600; margin: 0; line-height: 1.2; }
   .chapter-eyebrow { font-size: 13px; color: var(--text-dim); margin: 0 0 4px 0; }
@@ -170,7 +158,7 @@
 
   .file-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .file-choose-btn { border: 1px solid var(--border); background: #FCFCFA; padding: 8px 12px; border-radius: 8px; font-size: 13.5px; cursor: pointer; color: var(--text); }
-  .file-chosen { font-size: 13px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+  .file-chosen { font-size: 13px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; word-break: break-all; max-width: 100%; }
   .file-chosen button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px; }
   .uploading-note { font-size: 13px; color: var(--accent); margin-top: 8px; display: flex; align-items: center; gap: 8px; }
   .spinner { width: 14px; height: 14px; border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
@@ -185,10 +173,10 @@
   .item-desc { font-size: 14px; color: var(--text); margin: 6px 0 0 0; line-height: 1.5; white-space: pre-wrap; }
   .item-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
-  .file-row-view { margin-top: 10px; }
-  .file-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft); padding: 7px 12px; border-radius: 8px; font-size: 13px; color: var(--accent); text-decoration: none; }
+  .file-row-view { margin-top: 10px; max-width: 100%; }
+  .file-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft); padding: 7px 12px; border-radius: 8px; font-size: 13px; color: var(--accent); text-decoration: none; max-width: 100%; word-break: break-all; }
   .file-chip:hover { text-decoration: underline; }
-  .file-chip .fsize { color: #5C8E76; font-size: 12px; }
+  .file-chip .fsize { color: #5C8E76; font-size: 12px; flex-shrink: 0; }
   .preview-toggle { background: none; border: none; color: var(--accent); font-size: 12.5px; cursor: pointer; margin-left: 8px; text-decoration: underline; }
   .preview-box { margin-top: 10px; }
   .preview-box img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
@@ -201,22 +189,20 @@
 
   .loading { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 14px; padding: 30px 0; }
 
-  .quiz-wrap { max-width: 560px; }
-  .quiz-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-  .quiz-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 26px 24px; }
-  .quiz-question { font-size: 19px; font-weight: 600; line-height: 1.4; margin: 0 0 6px 0; }
-  .quiz-actions { display: flex; gap: 10px; margin-top: 18px; }
-
   @media (max-width: 780px) {
     .sidebar { position: fixed; z-index: 20; left: 0; top: 0; bottom: 0; transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.25); }
     .sidebar.open { transform: translateX(0); }
     .close-btn { display: flex; }
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 15; }
     .mobile-bar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--paper); position: sticky; top: 0; z-index: 5; }
-    .mobile-bar button { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
-    .mobile-bar span { font-weight: 600; font-size: 15px; }
-    .main { padding: 20px; }
+    .mobile-bar button { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; flex-shrink: 0; }
+    .mobile-bar span { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+    .main { padding: 20px; max-width: 100vw; }
     .chapter-header h1 { font-size: 24px; }
+    .chapter-header { flex-wrap: wrap; gap: 8px; }
+    .item-top { flex-wrap: wrap; }
+    .form-actions { flex-wrap: wrap; }
+    .file-row { max-width: 100%; }
   }
 </style>
 </head>
@@ -228,7 +214,6 @@
 function esc(s){ if (s===undefined||s===null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function formatBytes(b){ if (b===undefined||b===null) return ''; if (b<1024) return b+' B'; if (b<1024*1024) return (b/1024).toFixed(1)+' KB'; return (b/(1024*1024)).toFixed(1)+' MB'; }
 function newId(){ return (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36)+Math.random().toString(36).slice(2,10))); }
-function shuffleArray(arr){ for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
 function fileExt(name){ return (name||'').split('.').pop().toLowerCase(); }
 function isImageExt(ext){ return ['png','jpg','jpeg','gif','webp','svg'].includes(ext); }
 function isPdfExt(ext){ return ext === 'pdf'; }
@@ -246,8 +231,6 @@ let revealed = {};
 let searchTerm = '';
 let dragSourceId = null;
 let searchDebounceTimer = null;
-
-const quiz = { active: false, queue: [], index: 0, correct: 0, wrong: 0, revealed: false };
 
 const ui = {
   sidebarOpen: false,
@@ -314,7 +297,6 @@ async function loadChapterItems(chapterId){
 }
 
 async function mountChapter(chapterId, initialTab){
-  quiz.active = false;
   activeChapterId = chapterId;
   activeTab = initialTab || 'resources';
   revealed = {};
@@ -465,12 +447,6 @@ document.addEventListener('click', (e) => {
     mountChapter(chapterId, tab);
   }
 
-  if (action === 'start-quiz') { startQuiz(); }
-  if (action === 'exit-quiz') { quiz.active = false; renderMainInto(); }
-  if (action === 'reveal-quiz-answer') { quiz.revealed = true; renderMainInto(); }
-  if (action === 'quiz-correct') { quizAnswer(true); }
-  if (action === 'quiz-wrong') { quizAnswer(false); }
-
   if (action === 'toggle-preview') {
     const box = document.getElementById('preview-' + el.dataset.id);
     if (box) box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
@@ -616,7 +592,6 @@ function renderSidebarShell(){
       <input type="text" id="searchInput" placeholder="Search everything&hellip;" autocomplete="off" />
       <div id="searchDropdown"></div>
     </div>
-    <button class="quiz-nav-btn" data-action="start-quiz">&#127919; Quiz me on everything</button>
     <div class="chapter-list" id="chapterListContainer"></div>
     <div class="add-chapter" id="addChapterArea"></div>
   `;
@@ -766,8 +741,6 @@ function renderMainInto(){
   const el = document.getElementById('main');
   if (!el) return;
 
-  if (quiz.active) { renderQuizInto(el); return; }
-
   const chapter = chapters.find(c => c.id === activeChapterId);
 
   if (!chapter) {
@@ -779,13 +752,11 @@ function renderMainInto(){
       <div class="empty-state">
         <h2 class="serif">Pick a chapter, or start one</h2>
         <p>Each chapter holds its own resources, questions, and notes, so your material stays organized exactly the way your course is structured &mdash; and it's synced to every device you open this page from.</p>
-        <div class="dashboard-stats" id="dashboardStats"><div class="loading">Loading your overview&hellip;</div></div>
         ${chapters.length===0
           ? `<button class="btn primary" data-action="start-add-chapter">&#43; Create your first chapter</button>`
-          : `<button class="btn primary" data-action="start-quiz">&#127919; Quiz me on everything</button>`}
+          : ''}
       </div>
     `;
-    loadDashboardStats().then(renderDashboardStats);
     return;
   }
 
@@ -833,99 +804,6 @@ function refreshTabVisibility(){
     const t = document.querySelector('.tab[data-tab="'+k+'"]');
     if (t) t.className = 'tab' + (activeTab===k ? ' active' : '');
   });
-}
-
-/* ---- dashboard ---- */
-async function loadDashboardStats(){
-  const [res, qs, nt, mastered] = await Promise.all([
-    sbClient.from('resources').select('id', { count: 'exact', head: true }),
-    sbClient.from('questions').select('id', { count: 'exact', head: true }),
-    sbClient.from('notes').select('id', { count: 'exact', head: true }),
-    sbClient.from('questions').select('id', { count: 'exact', head: true }).eq('mastered', true),
-  ]);
-  return {
-    chapters: chapters.length,
-    resources: res.count || 0,
-    questions: qs.count || 0,
-    notes: nt.count || 0,
-    mastered: mastered.count || 0,
-  };
-}
-function renderDashboardStats(stats){
-  const el = document.getElementById('dashboardStats');
-  if (!el) return;
-  el.innerHTML = `
-    <div class="stat-tile"><strong>${stats.chapters}</strong><span>Chapters</span></div>
-    <div class="stat-tile"><strong>${stats.resources}</strong><span>Resources</span></div>
-    <div class="stat-tile"><strong>${stats.questions}</strong><span>Questions</span></div>
-    <div class="stat-tile"><strong>${stats.notes}</strong><span>Notes</span></div>
-    <div class="stat-tile accent"><strong>${stats.mastered}/${stats.questions}</strong><span>Mastered</span></div>
-  `;
-}
-
-/* ---- quiz mode ---- */
-async function startQuiz(){
-  ui.sidebarOpen = false; setSidebarOpenState();
-  const { data, error } = await sbClient.from('questions').select('*, chapters(title)').order('created_at');
-  if (error) { alert('Could not load questions: ' + error.message); return; }
-  quiz.queue = shuffleArray((data||[]).slice());
-  quiz.index = 0; quiz.correct = 0; quiz.wrong = 0; quiz.revealed = false; quiz.active = true;
-  activeChapterId = null;
-  renderMainInto();
-  renderChapterList();
-}
-function quizAnswer(correct){
-  const q = quiz.queue[quiz.index];
-  if (correct) { quiz.correct++; sbClient.from('questions').update({ mastered: true }).eq('id', q.id); }
-  else { quiz.wrong++; }
-  quiz.index++; quiz.revealed = false;
-  renderMainInto();
-}
-function renderQuizInto(el){
-  if (quiz.queue.length === 0) {
-    el.innerHTML = `
-      <div class="mobile-bar"><button data-action="toggle-sidebar">&#9776;</button><span>Quiz</span></div>
-      <div class="empty-state">
-        <h2 class="serif">No questions yet</h2>
-        <p>Add some questions to your chapters first, then come back to quiz yourself across all of them at once.</p>
-        <button class="btn primary" data-action="exit-quiz">Back to chapters</button>
-      </div>`;
-    return;
-  }
-  if (quiz.index >= quiz.queue.length) {
-    el.innerHTML = `
-      <div class="mobile-bar"><button data-action="toggle-sidebar">&#9776;</button><span>Quiz</span></div>
-      <div class="empty-state">
-        <h2 class="serif">Quiz complete</h2>
-        <p>You got ${quiz.correct} of ${quiz.queue.length} right${quiz.wrong>0 ? `, ${quiz.wrong} to review again` : ''}.</p>
-        <div style="display:flex; gap:10px;">
-          <button class="btn primary" data-action="start-quiz">Quiz again</button>
-          <button class="btn text" data-action="exit-quiz">Back to chapters</button>
-        </div>
-      </div>`;
-    return;
-  }
-  const q = quiz.queue[quiz.index];
-  const chapterTitle = q.chapters && q.chapters.title ? q.chapters.title : '';
-  el.innerHTML = `
-    <div class="mobile-bar"><button data-action="toggle-sidebar">&#9776;</button><span>Quiz</span></div>
-    <div class="quiz-wrap">
-      <div class="quiz-top">
-        <span class="chapter-eyebrow">Question ${quiz.index+1} of ${quiz.queue.length}${chapterTitle ? ' &middot; ' + esc(chapterTitle) : ''}</span>
-        <button class="btn text" data-action="exit-quiz">Exit quiz</button>
-      </div>
-      <div class="quiz-card">
-        <p class="quiz-question">${esc(q.question)}</p>
-        ${quiz.revealed
-          ? `<div class="answer-box">${q.answer ? esc(q.answer) : 'No answer was saved for this one.'}</div>`
-          : `<button class="answer-toggle" data-action="reveal-quiz-answer">Reveal answer</button>`}
-      </div>
-      ${quiz.revealed ? `
-        <div class="quiz-actions">
-          <button class="btn primary" data-action="quiz-correct">&#10003; Got it</button>
-          <button class="btn text" data-action="quiz-wrong">Still learning this</button>
-        </div>` : ''}
-    </div>`;
 }
 
 /* ---- chapters CRUD ---- */
